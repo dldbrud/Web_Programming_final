@@ -1,0 +1,3188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Stash — 개인 보관함</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Pretext: DOM-free text measurement & layout (chenglou/pretext) -->
+  <script src="./pretext.bundle.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#08090b;--surface:#141517;--surface2:#1b1d20;--surface3:#24272b;
+      --border:rgba(255,255,255,0.11);--border-hover:rgba(255,255,255,0.2);
+      --text:#f7f7f7;--text-2:#d6d9de;--text-3:#8e949e;
+      --topbar-bg:rgba(10,11,13,0.9);--card-shadow:rgba(0,0,0,0.55);
+      --c-link:#60a5fa;--c-link-bg:rgba(59,130,246,0.12);--c-link-br:rgba(59,130,246,0.22);
+      --c-image:#4ade80;--c-image-bg:rgba(34,197,94,0.12);--c-image-br:rgba(34,197,94,0.22);
+      --c-code:#fb923c;--c-code-bg:rgba(249,115,22,0.12);--c-code-br:rgba(249,115,22,0.22);
+      --c-memo:#c084fc;--c-memo-bg:rgba(168,85,247,0.12);--c-memo-br:rgba(168,85,247,0.22);
+      --c-file:#f59e0b;--c-file-bg:rgba(245,158,11,0.12);--c-file-br:rgba(245,158,11,0.22);
+      --sidebar-w:290px;--r:14px;--r-sm:10px;--r-xs:7px;
+    }
+    [data-theme="light"]{
+      --bg:#f2f2f0;--surface:#ffffff;--surface2:#f5f5f3;--surface3:#ebebea;
+      --border:rgba(0,0,0,0.08);--border-hover:rgba(0,0,0,0.16);
+      --text:#111111;--text-2:#555555;--text-3:#aaaaaa;
+      --topbar-bg:rgba(242,242,240,0.92);--card-shadow:rgba(0,0,0,0.1);
+      --c-link:#1d6fe8;--c-link-bg:rgba(29,111,232,0.08);--c-link-br:rgba(29,111,232,0.18);
+      --c-image:#16a34a;--c-image-bg:rgba(22,163,74,0.08);--c-image-br:rgba(22,163,74,0.18);
+      --c-code:#ea5a0c;--c-code-bg:rgba(234,90,12,0.08);--c-code-br:rgba(234,90,12,0.18);
+      --c-memo:#9333ea;--c-memo-bg:rgba(147,51,234,0.08);--c-memo-br:rgba(147,51,234,0.18);
+      --c-file:#d97706;--c-file-bg:rgba(217,119,6,0.08);--c-file-br:rgba(217,119,6,0.18);
+    }
+    [data-theme="light"] .sidebar{background:var(--surface)}
+    [data-theme="light"] .card{background:var(--surface);box-shadow:0 2px 10px var(--card-shadow)}
+    [data-theme="light"] .card:hover{box-shadow:0 4px 14px var(--card-shadow)}
+    [data-theme="light"] .modal{background:var(--surface);border-color:var(--border);box-shadow:0 24px 48px rgba(0,0,0,0.12)}
+    [data-theme="light"] .modal-close,
+    [data-theme="light"] .btn-cancel,
+    [data-theme="light"] .detail-save-btn{background:var(--surface2);border-color:var(--border)}
+    [data-theme="light"] .modal-label,
+    [data-theme="light"] .field-hint,
+    [data-theme="light"] .detail-section-title,
+    [data-theme="light"] .detail-meta-label{color:var(--text-3)}
+    [data-theme="light"] .modal-title.detail-heading{color:var(--text)}
+    [data-theme="light"] .detail-time{color:var(--text-3)}
+    [data-theme="light"] .detail-main-content,
+    [data-theme="light"] .detail-desc,
+    [data-theme="light"] .detail-code-block code{color:var(--text-2)}
+    [data-theme="light"] .detail-desc{border-left-color:var(--border-hover)}
+    [data-theme="light"] .detail-meta{border-top-color:var(--border)}
+    [data-theme="light"] .memo-content,
+    [data-theme="light"] .card-text-box,
+    [data-theme="light"] .url-pill,
+    [data-theme="light"] .code-block,
+    [data-theme="light"] .detail-main-content,
+    [data-theme="light"] .detail-code-block,
+    [data-theme="light"] .modal-input{background:var(--surface2);box-shadow:none}
+    [data-theme="light"] .card-action-btn,
+    [data-theme="light"] .icon-btn,
+    [data-theme="light"] .foot-coll{background:var(--surface2);box-shadow:none;border-color:var(--border)}
+    [data-theme="light"] .card-foot{border-top-color:var(--border)}
+    [data-theme="dark"] .modal{background:#242830;border-color:rgba(255,255,255,0.22);box-shadow:0 28px 60px rgba(0,0,0,0.62),inset 0 1px 0 rgba(255,255,255,0.06)}
+    [data-theme="dark"] .modal-close,
+    [data-theme="dark"] .btn-cancel,
+    [data-theme="dark"] .detail-save-btn{background:#2d3340;border-color:rgba(255,255,255,0.22);color:#c9ced8}
+    [data-theme="dark"] .url-pill,
+    [data-theme="dark"] .detail-main-content,
+    [data-theme="dark"] .detail-code-block,
+    [data-theme="dark"] .modal-input{background:#2b303a;border-color:rgba(255,255,255,0.24);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}
+    [data-theme="dark"] .detail-code-block code,
+    [data-theme="dark"] .detail-main-content,
+    [data-theme="dark"] .detail-desc{color:#d6dbe4}
+    [data-theme="dark"] .detail-desc{border-left-color:rgba(174,182,196,0.9)}
+    [data-theme="dark"] .modal-title.detail-heading{color:#f8fafc}
+    [data-theme="dark"] #detail-body .url-pill{background:#242830;border-color:rgba(255,255,255,0.26);color:#f1f5f9}
+    [data-theme="dark"] #detail-body .url-pill:hover{background:#2d3340;border-color:rgba(255,255,255,0.38)}
+    [data-theme="dark"] .detail-code-block{background:#242830;border-color:rgba(255,255,255,0.26);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}
+    [data-theme="dark"] .detail-main-content{background:#242830;border-color:rgba(255,255,255,0.26)}
+    [data-theme="dark"] .detail-desc{color:#e5e7eb;border-left-color:rgba(209,213,219,0.8)}
+    [data-theme="dark"] .detail-save-btn{font-weight:800}
+    [data-theme="dark"] .detail-save-btn[data-act]{background:#303642;border-color:rgba(255,255,255,0.26);color:#e5e7eb}
+    [data-theme="dark"] .detail-save-btn[data-act]:hover{background:#3a4250;border-color:rgba(255,255,255,0.38);color:#ffffff}
+    [data-theme="dark"] #detail-body .tag{background:#313744!important;color:#f3f4f6!important;border-color:rgba(255,255,255,0.22)!important}
+    [data-theme="dark"] .card .link-preview{box-shadow:0 8px 18px rgba(0,0,0,0.18),inset 0 1px 0 rgba(255,255,255,0.12)}
+    [data-theme="dark"] .link-preview{background:linear-gradient(135deg,#262b34,#20242c)!important;border:1px solid rgba(255,255,255,0.24)}
+    [data-theme="dark"] .link-preview-initial{background:rgba(255,255,255,0.12);color:#f3f4f6}
+    [data-theme="dark"] .link-preview-host{color:#f3f4f6}
+    [data-theme="dark"] .link-preview-scheme,
+    [data-theme="dark"] .link-preview-arrow{color:#aeb6c4}
+    [data-theme="dark"] .card .memo-content,
+    [data-theme="dark"] .card .card-text-box,
+    [data-theme="dark"] .card .code-block{background:#242830;border-color:rgba(255,255,255,0.26)}
+    [data-theme="dark"] .card .support-desc{border-left-color:rgba(209,213,219,0.75)}
+    [data-theme="dark"] .card .support-desc-label{color:#b8c0cc}
+    [data-theme="dark"] .card-action-btn.btn-edit,
+    [data-theme="dark"] .card-action-btn.btn-pin,
+    [data-theme="dark"] .card-action-btn.btn-del,
+    [data-theme="dark"] .modal-close{border-color:rgba(255,255,255,0.24);color:#c9ced8;background:#242830}
+    [data-theme="dark"] .card-action-btn:hover,
+    [data-theme="dark"] .modal-close:hover{background:#3a4250;border-color:rgba(255,255,255,0.38);color:#ffffff}
+    [data-theme="dark"] .add-modal .modal-input,
+    [data-theme="dark"] .edit-modal-wide .modal-input,
+    [data-theme="dark"] .add-modal .tag-input-wrap,
+    [data-theme="dark"] .edit-modal-wide .tag-input-wrap,
+    [data-theme="dark"] .add-modal .add-file-btn,
+    [data-theme="dark"] .edit-modal-wide .add-file-btn,
+    [data-theme="dark"] .add-modal .attach-preview-card,
+    [data-theme="dark"] .edit-modal-wide .attach-preview-card{background:#3f4653;border-color:rgba(255,255,255,0.3);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08)}
+    [data-theme="dark"] .add-modal .modal-input:focus,
+    [data-theme="dark"] .edit-modal-wide .modal-input:focus,
+    [data-theme="dark"] .add-modal .tag-input-wrap:focus-within,
+    [data-theme="dark"] .edit-modal-wide .tag-input-wrap:focus-within{background:#46505f;border-color:rgba(255,255,255,0.44)}
+    [data-theme="dark"] .add-modal .add-file-btn:hover,
+    [data-theme="dark"] .edit-modal-wide .add-file-btn:hover{background:#46505f;border-color:rgba(255,255,255,0.4)}
+    [data-theme="dark"] .add-modal .coll-option:not(.checked),
+    [data-theme="dark"] .edit-modal-wide .coll-option:not(.checked),
+    [data-theme="dark"] .add-modal .type-option:not(.checked),
+    [data-theme="dark"] .edit-modal-wide .type-option:not(.checked){background:#3a4250;border-color:rgba(255,255,255,0.24);color:#d6dbe4}
+    [data-theme="dark"] .add-modal .preview-thumb,
+    [data-theme="dark"] .edit-modal-wide .preview-thumb{border-color:rgba(255,255,255,0.3)}
+    [data-theme="dark"] .add-modal .attach-preview-card.new,
+    [data-theme="dark"] .edit-modal-wide .attach-preview-card.new,
+    [data-theme="dark"] .add-modal .attach-preview-card.saved,
+    [data-theme="dark"] .edit-modal-wide .attach-preview-card.saved{background:#3f4653;border-color:rgba(255,255,255,0.3)}
+    [data-theme="dark"] .add-modal .attach-preview-card.blocked,
+    [data-theme="dark"] .edit-modal-wide .attach-preview-card.blocked{background:#453d42;border-color:rgba(255,255,255,0.28)}
+    [data-theme="dark"] .attach-preview-icon,
+    [data-theme="dark"] .attach-preview-state{background:#303642;border-color:rgba(255,255,255,0.24);color:#d6dbe4}
+    [data-theme="dark"] .attach-preview-name{color:#f1f5f9}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;scrollbar-width:none;-ms-overflow-style:none}
+    body::-webkit-scrollbar{display:none}
+    .app{display:flex;min-height:100vh}
+
+    /* ── 사이드바 ── */
+    .sidebar{width:var(--sidebar-w);background:linear-gradient(180deg,#181a1f 0%,#14161a 100%);border-right:1px solid var(--border);display:block;padding:20px 16px 32px;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:scroll;transition:transform 0.24s ease;scrollbar-width:none;-ms-overflow-style:none}
+    .sidebar::-webkit-scrollbar{display:none}
+    .sidebar>*{margin-bottom:20px}
+    .sidebar>*:last-child{margin-bottom:0}
+    .stat-num{display:block;font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--text)}
+    .stat-label{display:block;font-size:10px;color:var(--text-3);font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin-top:2px}
+    .logo-row{display:flex;align-items:center;gap:9px}
+    .logo{font-size:22px;font-weight:800;letter-spacing:-0.6px}
+    .logo-badge{font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;background:var(--surface3);color:var(--text-3);letter-spacing:0.03em}
+    .section-label{font-size:11px;font-weight:700;color:var(--text-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
+
+    /* 로그인 영역 */
+    .btn-auth-open{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text-2);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s,border-color 0.15s;text-align:left}
+    .btn-auth-open:hover{background:var(--surface3);border-color:var(--border-hover)}
+    #user-profile{display:flex;align-items:flex-start;gap:10px;padding:4px 0}
+    .profile-avatar{width:36px;height:36px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
+    .profile-info{flex:1;min-width:0}
+    .profile-name{display:block;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .profile-id{display:block;font-size:11px;color:var(--text-3);margin-top:1px}
+    .profile-email{display:block;font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .btn-logout{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:16px;padding:4px;margin-left:auto;flex-shrink:0;transition:color 0.15s}
+    .btn-logout:hover{color:var(--text)}
+
+    /* 새 카드 */
+    .btn-add{width:100%;padding:9px 14px;background:#22252b;color:#f0f0f0;border:1px solid var(--border-hover);border-radius:var(--r-sm);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.15s,transform 0.1s;min-height:38px}
+    [data-theme="light"] .btn-add{background:#111111;color:#ffffff;border-color:rgba(0,0,0,0.15)}
+    .btn-add:hover{opacity:0.82}
+    .btn-add:active{transform:scale(0.98)}
+
+    /* 필터 */
+    .filter-btn{display:grid;grid-template-columns:7px minmax(0,1fr) 34px 24px;align-items:center;gap:7px;width:100%;padding:7px 10px;border:none;border-radius:var(--r-xs);background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;cursor:pointer;transition:background 0.12s,color 0.12s;text-align:left}
+    .filter-btn:hover{background:var(--surface2)}
+    .filter-btn.active{background:var(--surface2);color:var(--text)}
+    .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .dot.all{background:var(--text-3)}
+    .dot.link{background:var(--c-link)}
+    .dot.image{background:var(--c-image)}
+    .dot.code{background:var(--c-code)}
+    .dot.memo{background:var(--c-memo)}
+    .dot.file{background:var(--c-file)}
+    .filter-count{width:34px;text-align:right;font-size:11px;color:var(--text-3);font-weight:600;flex-shrink:0}
+
+    .custom-cat-btn{display:grid;grid-template-columns:7px minmax(0,1fr) 34px 24px;align-items:center;gap:7px;width:100%;padding:7px 10px;border-radius:var(--r-xs);background:transparent;color:var(--text-2);font-size:13px;cursor:pointer;transition:background 0.12s;text-align:left;border:none;font-family:inherit}
+    .custom-cat-name{min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .custom-cat-btn:hover{background:var(--surface2)}
+    .custom-cat-btn.active{background:var(--surface2);color:var(--text)}
+    .cat-delete-btn{width:24px;background:none;border:none;color:var(--text-3);cursor:pointer;font-size:11px;padding:2px 5px;border-radius:4px;flex-shrink:0}
+    .cat-delete-btn:hover{color:var(--text);background:var(--surface3)}
+    .btn-add-category{width:100%;padding:6px 10px;border:1px dashed var(--border);border-radius:var(--r-xs);background:transparent;color:var(--text-3);font-family:inherit;font-size:12px;cursor:pointer;margin-top:4px;transition:border-color 0.15s,color 0.15s}
+    .btn-add-category:hover{border-color:var(--border-hover);color:var(--text-2)}
+
+    .tag-row{display:flex;align-items:center;border-radius:var(--r-xs);transition:background 0.12s}
+    .tag-row:hover{background:var(--surface2)}
+    .tag-row.active{background:var(--surface2)}
+    .tag-row.active .tag-btn-main{color:var(--text)}
+    .tag-btn-main{flex:1;padding:6px 10px;border:none;border-radius:var(--r-xs);background:transparent;color:var(--text-3);font-family:inherit;font-size:12px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:4px}
+    .tag-btn-main:hover{color:var(--text-2)}
+    .tag-count{margin-left:auto;font-size:10px;font-weight:700}
+    .tag-del-btn{width:24px;height:24px;border:none;background:none;color:var(--text-3);cursor:pointer;font-size:10px;border-radius:4px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.12s,color 0.12s;flex-shrink:0;margin-right:4px}
+    .tag-row:hover .tag-del-btn{opacity:1}
+    .tag-del-btn:hover{color:#f87171;background:rgba(239,68,68,0.1)}
+    .tag-more-btn{width:100%;padding:5px 10px;border:none;background:none;color:var(--c-link);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;text-align:left;border-radius:var(--r-xs);transition:background 0.12s}
+    .tag-more-btn:hover{background:var(--surface2)}
+
+    .collection-item{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:var(--r-xs);cursor:pointer;color:var(--text-2);font-size:13px;transition:background 0.12s;user-select:none}
+    .collection-item:hover{background:var(--surface2)}
+    .collection-item.active{background:var(--surface2);color:var(--text)}
+    .collection-count{margin-left:auto;font-size:11px;color:var(--text-3);font-weight:600}
+    .coll-delete-btn{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:11px;padding:2px 5px;border-radius:4px;opacity:0}
+    .collection-item:hover .coll-delete-btn{opacity:1}
+    .coll-delete-btn:hover{color:var(--text);background:var(--surface3)}
+    .btn-new-collection{width:100%;padding:6px 10px;border:1px dashed var(--border);border-radius:var(--r-xs);background:transparent;color:var(--text-3);font-family:inherit;font-size:12px;cursor:pointer;margin-top:4px;transition:border-color 0.15s,color 0.15s}
+    .btn-new-collection:hover{border-color:var(--border-hover);color:var(--text-2)}
+
+    /* 통계 */
+    .stats{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
+    .stat{flex:1;padding:10px 0;text-align:center;border-right:1px solid var(--border)}
+    .stat:last-child{border-right:none}
+
+    /* ── 메인 ── */
+    .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;padding-top:60px}
+
+    /* 상단 바 */
+    .topbar{position:fixed;top:0;left:var(--sidebar-w);right:0;height:60px;background:var(--topbar-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(255,255,255,0.04),0 10px 30px rgba(0,0,0,0.22);display:flex;align-items:center;gap:10px;padding:0 24px;z-index:90}
+    .topbar-project-label{font-size:14px;font-weight:700;white-space:nowrap}
+    .search-wrap{flex:1;max-width:440px;display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:0 12px;transition:border-color 0.15s;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04)}
+    .search-wrap:focus-within{border-color:var(--border-hover)}
+    .search-icon{font-size:13px;color:var(--text-3)}
+    .search-input{flex:1;background:none;border:none;color:var(--text);font-family:inherit;font-size:13px;padding:9px 0;outline:none}
+    .search-input::placeholder{color:var(--text-3)}
+    .topbar-icon-btn{min-width:34px;height:34px;border-radius:var(--r-xs);background:var(--surface2);border:1px solid var(--border);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:13px;font-weight:800;padding:0 12px;transition:background 0.12s,color 0.12s,border-color 0.12s;flex-shrink:0;white-space:nowrap}
+    .topbar-icon-btn:hover{background:var(--surface3);color:var(--text)}
+    .topbar-icon-btn.active{background:var(--c-link-bg);color:var(--c-link);border-color:var(--c-link-br)}
+    .topbar-icon-btn.danger:hover{background:rgba(239,68,68,0.15);color:#f87171;border-color:rgba(239,68,68,0.3)}
+    .selection-tool{display:none}
+    .selection-tool.show{display:flex}
+    .select-bar{display:none;align-items:center;gap:8px;padding:0 8px 0 12px;height:34px;border-radius:var(--r-xs);background:var(--c-link-bg);border:1px solid var(--c-link-br);color:var(--c-link);font-size:12px;font-weight:800;white-space:nowrap}
+    .select-bar.show{display:flex}
+    .select-clear{width:22px;height:22px;border:none;border-radius:5px;background:rgba(255,255,255,0.08);color:inherit;cursor:pointer;font-size:12px}
+    .btn-clear-filter{padding:6px 12px;border-radius:var(--r-xs);background:rgba(251,146,60,0.12);border:1px solid rgba(251,146,60,0.25);color:#fb923c;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background 0.12s}
+    .btn-clear-filter:hover{background:rgba(251,146,60,0.2)}
+
+    /* 보드 */
+    .board-wrap{padding:24px 28px;min-height:calc(100vh - 60px);background:radial-gradient(circle at top left,rgba(96,165,250,0.04),transparent 280px),var(--bg)}
+    #board{display:block;column-width:300px;column-gap:18px}
+
+    /* 빈 상태 */
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:400px;text-align:center;padding:40px}
+    .empty-icon{font-size:48px;opacity:0.4}
+    .empty-title{font-size:20px;font-weight:700;color:var(--text-2)}
+    .empty-desc{font-size:13px;color:var(--text-3);line-height:1.7}
+
+    /* ── 카드 ── */
+    .card{background:linear-gradient(180deg,#303642 0%,#2b303a 100%);border:1px solid rgba(255,255,255,0.22);border-radius:var(--r);padding:16px 20px 16px;transition:border-color 0.15s,transform 0.15s,box-shadow 0.15s;box-shadow:0 16px 36px rgba(0,0,0,0.72),0 0 0 1px rgba(255,255,255,0.035),inset 0 1px 0 rgba(255,255,255,0.08);position:relative;min-width:0;display:inline-block;width:100%;margin:0 0 18px;break-inside:avoid;page-break-inside:avoid;vertical-align:top}
+    .card:hover{border-color:rgba(255,255,255,0.34);transform:translateY(-1px);box-shadow:0 22px 48px rgba(0,0,0,0.78),0 0 0 1px rgba(255,255,255,0.06),inset 0 1px 0 rgba(255,255,255,0.1)}
+    .card.pinned{border-top:2px solid var(--c-link)}
+    .card.selected{outline:2px solid var(--c-link);outline-offset:2px;border-color:var(--c-link-br)}
+    .card-top{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;padding-right:112px;min-height:30px}
+    .card-actions{position:absolute;top:16px;right:20px;display:flex;align-items:center;gap:6px;z-index:3}
+    .card-select-btn{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text-3);cursor:pointer;font-size:12px;display:none;align-items:center;justify-content:center;flex-shrink:0;z-index:2}
+    .select-mode .card-select-btn{display:flex}
+    .card.selected .card-select-btn{background:var(--c-link-bg);border-color:var(--c-link-br);color:var(--c-link)}
+    .badge{font-size:11px;font-weight:800;padding:5px 11px;border-radius:20px;letter-spacing:0}
+    .badge-link{background:var(--c-link-bg);color:var(--c-link);border:1px solid var(--c-link-br)}
+    .badge-image{background:var(--c-image-bg);color:var(--c-image);border:1px solid var(--c-image-br)}
+    .badge-code{background:var(--c-code-bg);color:var(--c-code);border:1px solid var(--c-code-br)}
+    .badge-memo{background:var(--c-memo-bg);color:var(--c-memo);border:1px solid var(--c-memo-br)}
+    .card-action-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:#242830;color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:background 0.12s,color 0.12s,border-color 0.12s;flex-shrink:0;box-shadow:0 1px 0 rgba(255,255,255,0.04)}
+    .card-action-btn:hover{background:var(--surface3);color:var(--text);border-color:var(--border-hover)}
+    .card-action-btn.del:hover{background:rgba(239,68,68,0.15);color:#f87171;border-color:rgba(239,68,68,0.3)}
+    .card-action-btn.pinned{color:var(--c-link);border-color:var(--c-link-br);background:var(--c-link-bg);transform:rotate(0deg)}
+    .pin-icon{display:inline-block;font-size:14px;line-height:1;transform:rotate(-18deg)}
+    .card-action-btn.pinned .pin-icon{transform:rotate(0deg)}
+    .card-title{font-size:14px;font-weight:700;line-height:1.4;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    .card-kinds{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;padding-right:112px}
+    .kind-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:5px 9px;border-radius:999px;border:1px solid var(--border);background:var(--surface2);color:var(--text-2)}
+    .kind-chip.link{background:var(--c-link-bg);border-color:var(--c-link-br);color:var(--c-link)}
+    .kind-chip.image{background:var(--c-image-bg);border-color:var(--c-image-br);color:var(--c-image)}
+    .kind-chip.code{background:var(--c-code-bg);border-color:var(--c-code-br);color:var(--c-code)}
+    .kind-chip.memo{background:var(--c-memo-bg);border-color:var(--c-memo-br);color:var(--c-memo)}
+    .card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+    .card-cats{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;padding-right:112px}
+    .tag{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;cursor:pointer;gap:4px;letter-spacing:0.02em}
+    .tag-remove{background:none;border:none;cursor:pointer;font-size:10px;color:inherit;opacity:0.6;padding:0;line-height:1}
+    .card-inner-body{overflow:hidden}
+    .card.collapsed .card-inner-body{max-height:300px}
+    .card-toggle-bar{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;margin:8px 0 0;padding:7px 0;border-radius:var(--r-xs);background:var(--surface2);border:1px solid var(--border);color:var(--text-3);font-size:12px;font-weight:600;cursor:pointer;transition:background 0.12s,color 0.12s;user-select:none}
+    .card-toggle-bar:hover{background:var(--border);color:var(--text-2)}
+    .card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.18)}
+    .foot-left{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
+    .foot-right{display:flex;align-items:center;gap:4px;flex-shrink:0}
+    .foot-source{font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+    .foot-date{font-size:11px;color:var(--text-3)}
+    .foot-colls{display:flex;gap:4px;flex-wrap:wrap}
+    .foot-coll{display:inline-flex;align-items:center;gap:4px;max-width:120px;padding:2px 7px;border-radius:20px;background:#252a33;border:1px solid rgba(255,255,255,0.18);font-size:11px;color:var(--text-2)}
+    .foot-coll-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .author-line{font-size:11px;color:var(--text-3);margin:2px 0 6px}
+    .icon-btn{width:26px;height:26px;border-radius:5px;border:1px solid rgba(255,255,255,0.18);background:#242830;color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:background 0.12s,color 0.12s}
+    .icon-btn:hover{background:var(--surface3);color:var(--text)}
+    .icon-btn.copied{background:rgba(74,222,128,0.15);color:var(--c-image);border-color:var(--c-image-br)}
+    .link-preview{height:48px;border-radius:var(--r-sm);display:flex;align-items:center;gap:10px;padding:0 14px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:opacity 0.15s}
+    .link-preview:hover{opacity:0.88}
+    .link-preview-initial{width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:rgba(255,255,255,0.95);flex-shrink:0;letter-spacing:-0.5px}
+    .link-preview-meta{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+    .link-preview-host{font-size:12.5px;font-weight:700;color:rgba(255,255,255,0.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .link-preview-scheme{font-size:10px;color:rgba(255,255,255,0.55);font-weight:500}
+    .link-preview-arrow{font-size:13px;color:rgba(255,255,255,0.55);flex-shrink:0}
+    .memo-content,.card-text-box{font-size:12px;line-height:1.65;color:var(--text-2);display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;margin:0 0 10px;padding:11px 13px;border:1px solid rgba(255,255,255,0.22);border-radius:var(--r-xs);background:#252a33;white-space:pre-wrap;word-break:break-word;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}
+    .support-desc{margin:0 0 10px;padding:3px 0 3px 12px;border-left:3px solid rgba(148,163,184,0.72);color:var(--text-2)}
+    .support-desc-label{display:block;margin-bottom:3px;font-size:10px;font-weight:900;color:var(--text-3);letter-spacing:0.06em;text-transform:uppercase}
+    .support-desc-text{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+    .url-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+    .url-pill{display:flex;align-items:center;gap:8px;min-height:32px;border:1px solid rgba(255,255,255,0.22);background:#252a33;border-radius:var(--r-xs);padding:7px 10px;color:var(--text-2);font-size:12px;text-decoration:none;overflow:hidden}
+    .url-pill:hover{background:var(--surface3);color:var(--text)}
+    .url-pill span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .img-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:4px}
+    .img-thumb-wrap{width:80px;height:80px;border-radius:var(--r-xs);overflow:hidden;flex-shrink:0;border:1px solid var(--border)}
+    .img-thumb{width:100%;height:100%;object-fit:cover}
+    .img-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+    .img-caption{font-size:13px;font-weight:700;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    /* 멀티 이미지 그리드 */
+    .img-grid{display:grid;gap:6px;margin-bottom:8px;border-radius:var(--r-xs);overflow:hidden}
+    .img-grid.n1{grid-template-columns:1fr}
+    .img-grid.n2{grid-template-columns:1fr 1fr}
+    .img-grid.n3{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}
+    .img-grid.n4plus{grid-template-columns:1fr 1fr 1fr}
+    .img-grid-item{position:relative;overflow:hidden;border-radius:6px;aspect-ratio:1;cursor:pointer}
+    .img-grid-item img{width:100%;height:100%;object-fit:cover;transition:transform 0.2s}
+    .img-grid-item:hover img{transform:scale(1.04)}
+    .img-grid-more{position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:800}
+    /* 이미지 미리보기 (모달) */
+    .preview-thumb{position:relative;width:72px;height:72px;border-radius:var(--r-xs);overflow:hidden;border:1px solid var(--border)}
+    .preview-thumb img{width:100%;height:100%;object-fit:cover}
+    .preview-del{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.65);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;line-height:1}
+    /* 파일 첨부 미리보기 */
+    .attach-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:var(--r-xs);background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--text-2);position:relative}
+    .attach-chip-del{background:none;border:none;cursor:pointer;color:var(--text-3);font-size:11px;padding:0 2px;line-height:1}
+    .attach-chip-del:hover{color:#f87171}
+    .attach-preview-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:8px}
+    .attach-preview-card{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-xs);background:var(--surface2);border:1px solid var(--border)}
+    .attach-preview-card.new{background:#f4f8ff;border-color:#cfe0ff}
+    .attach-preview-card.saved{background:#fbfbfa}
+    .attach-preview-card.blocked{background:#fff7f7;border-color:#fecaca}
+    .attach-preview-icon{width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px}
+    .attach-preview-main{min-width:0}
+    .attach-preview-name{display:block;font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .attach-preview-meta{display:block;margin-top:2px;font-size:11px;font-weight:700;color:var(--text-3)}
+    .attach-preview-state{font-size:10px;font-weight:900;color:var(--text-3);background:#fff;border:1px solid var(--border);border-radius:999px;padding:3px 7px;white-space:nowrap}
+    .attach-preview-card.new .attach-preview-state{color:#3b6fe8;border-color:#cfe0ff}
+    .attach-preview-card.blocked .attach-preview-state{color:#ef4444;border-color:#fecaca}
+    /* 카드 내 파일 첨부 */
+    .attach-list{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+    .attach-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r-xs);background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:background 0.12s}
+    .attach-item:hover{background:var(--surface3)}
+    .attach-icon{font-size:16px;flex-shrink:0}
+    .attach-name{font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+    .attach-size{font-size:10px;color:var(--text-3);flex-shrink:0}
+    /* 라이트박스 */
+    #lightbox{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.92);display:none;align-items:center;justify-content:center}
+    #lightbox.open{display:flex}
+    #lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:var(--r-sm)}
+    .lb-close{position:absolute;top:20px;right:24px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1}
+    .lb-prev,.lb-next{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:22px;cursor:pointer;padding:10px 14px;border-radius:var(--r-xs);transition:background 0.15s}
+    .lb-prev{left:20px}.lb-next{right:20px}
+    .lb-prev:hover,.lb-next:hover{background:rgba(255,255,255,0.22)}
+    .code-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .code-lang-pill{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--c-code-bg);color:var(--c-code);border:1px solid var(--c-code-br)}
+    .code-sub-title{font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .code-block{background:#252a33;border:1px solid rgba(255,255,255,0.22);border-radius:var(--r-xs);padding:10px 12px;position:relative;margin-bottom:10px;overflow:hidden;max-height:340px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}
+    .code-block code{font-family:'SF Mono','Fira Code','Cascadia Code',monospace;font-size:12px;line-height:1.65;color:var(--text-2);white-space:pre;display:block;overflow:hidden}
+    .code-fade{position:absolute;bottom:0;left:0;right:0;height:32px;background:linear-gradient(transparent,var(--surface2))}
+    .memo-content{-webkit-line-clamp:8}
+
+    /* ── 인증 오버레이 ── */
+    #auth-overlay{position:fixed;inset:0;z-index:500;background:var(--bg);align-items:center;justify-content:center;padding:24px}
+    .auth-bg-glow{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+    .auth-bg-glow::before{content:'';position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(96,165,250,0.05) 0%,transparent 70%)}
+    .auth-card{position:relative;z-index:1;width:420px;max-width:100%;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;box-shadow:0 32px 64px rgba(0,0,0,0.4);display:flex;flex-direction:column;gap:18px}
+    .auth-logo-row{display:flex;align-items:center;gap:10px}
+    .auth-logo-text{font-size:28px;font-weight:800;letter-spacing:-0.8px}
+    .auth-logo-sub{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--surface3);color:var(--text-3)}
+    .auth-tagline{font-size:13px;color:var(--text-3);margin-top:-6px}
+    .auth-tabs{display:flex;gap:2px;background:var(--surface2);border-radius:var(--r-xs);padding:3px}
+    .auth-tab{flex:1;padding:9px;border:none;border-radius:5px;background:transparent;color:var(--text-2);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.15s,color 0.15s}
+    .auth-tab.active{background:var(--surface3);color:var(--text)}
+    #auth-error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r-xs);color:#f87171;font-size:12.5px;padding:10px 13px;line-height:1.5;display:none}
+    .auth-form{display:flex;flex-direction:column;gap:12px}
+    .auth-field{display:flex;flex-direction:column;gap:5px}
+    .auth-label{font-size:11px;font-weight:700;color:var(--text-3);letter-spacing:0.07em;text-transform:uppercase}
+    .auth-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-xs);color:var(--text);font-family:inherit;font-size:14px;padding:11px 13px;transition:border-color 0.15s;outline:none}
+    .auth-input:focus{border-color:var(--border-hover)}
+    .auth-input::placeholder{color:var(--text-3)}
+    .auth-pw-wrap{position:relative}
+    .auth-pw-wrap .auth-input{padding-right:44px}
+    .auth-pw-toggle{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);cursor:pointer;font-size:14px;padding:4px;line-height:1}
+    .auth-pw-toggle:hover{color:var(--text-2)}
+    .auth-submit{width:100%;padding:13px;background:#111111;border:none;border-radius:var(--r-xs);color:#ffffff;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px;transition:opacity 0.15s}
+    [data-theme="light"] .auth-submit{background:#111111;color:#ffffff}
+    .auth-submit:hover{opacity:0.82}
+    .auth-submit:active{transform:scale(0.98)}
+
+    /* ── 모달 ── */
+    .modal-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.66);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal-overlay.open{display:flex}
+    .modal{background:#242830;border:1px solid rgba(255,255,255,0.22);border-radius:var(--r);padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;box-shadow:0 28px 60px rgba(0,0,0,0.62),inset 0 1px 0 rgba(255,255,255,0.06)}
+    .modal::-webkit-scrollbar{display:none}
+    .add-modal{max-width:800px}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .modal-title{font-size:15px;font-weight:700;color:var(--text)}
+    .modal-close{width:32px;height:32px;border-radius:var(--r-xs);background:#2d3340;border:1px solid rgba(255,255,255,0.22);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:background 0.12s}
+    .modal-close:hover{background:var(--surface3)}
+    .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .modal-field{display:flex;flex-direction:column;gap:6px}
+    .modal-field.full{grid-column:1/-1}
+    .modal-label{font-size:11px;font-weight:800;color:#aeb6c4;letter-spacing:0.07em;text-transform:uppercase}
+    .field-hint{font-size:12px;color:#9aa4b3;line-height:1.5;margin-top:-2px}
+    .modal-input{background:#2b303a;border:1px solid rgba(255,255,255,0.24);border-radius:var(--r-xs);color:var(--text);font-family:inherit;font-size:14px;padding:10px 12px;outline:none;transition:border-color 0.15s;width:100%;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}
+    .modal-input:focus{border-color:var(--border-hover)}
+    .modal-input::placeholder{color:var(--text-3)}
+    .modal-textarea{resize:vertical;min-height:80px;line-height:1.5}
+    .modal-textarea.code{font-family:'SF Mono','Fira Code',monospace;font-size:13px}
+    .modal-textarea.large{min-height:160px}
+    .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+    .btn-cancel{padding:9px 18px;border-radius:var(--r-xs);background:#2d3340;border:1px solid rgba(255,255,255,0.22);color:var(--text-2);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.12s}
+    .btn-cancel:hover{background:var(--surface3)}
+    .btn-confirm{padding:9px 18px;border-radius:var(--r-xs);background:#111111;border:none;color:#ffffff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.12s}
+    [data-theme="light"] .btn-confirm{background:#111111;color:#ffffff}
+    .btn-confirm:hover{opacity:0.82}
+    .btn-danger{padding:9px 18px;border-radius:var(--r-xs);background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background 0.12s}
+    .btn-danger:hover{background:rgba(239,68,68,0.25)}
+    .add-file-btn{display:inline-flex;align-items:center;padding:8px 13px;border-radius:var(--r-xs);background:var(--surface2);border:1px solid var(--border);color:var(--text-2);font-size:13px;cursor:pointer;transition:background 0.12s}
+    .add-file-btn:hover{background:var(--surface3)}
+    .add-file-btn input{display:none}
+    .tag-input-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-xs);padding:6px 10px;display:flex;flex-wrap:wrap;gap:5px;cursor:text;min-height:44px;align-items:flex-start;transition:border-color 0.15s}
+    .tag-input-wrap:focus-within{border-color:var(--border-hover)}
+    .tag-input{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:13px;min-width:80px;padding:2px 0}
+    .tag-input::placeholder{color:var(--text-3)}
+    .coll-options{display:flex;flex-wrap:wrap;gap:6px}
+    .coll-option{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text-2);font-size:12px;cursor:pointer;transition:background 0.12s,border-color 0.12s}
+    .coll-option.checked{background:var(--c-link-bg);border-color:var(--c-link-br);color:var(--c-link)}
+    .type-options{display:flex;flex-wrap:wrap;gap:8px}
+    .type-option{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text-2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background 0.12s,border-color 0.12s,color 0.12s}
+    .type-option.checked{background:var(--c-link-bg);border-color:var(--c-link-br);color:var(--c-link)}
+    .coll-empty{font-size:12px;color:var(--text-3);padding:4px 0}
+    .emoji-btn{width:40px;height:40px;border-radius:var(--r-xs);background:var(--surface2);border:1px solid var(--border);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.12s;flex-shrink:0}
+    .emoji-btn:hover{background:var(--surface3)}
+    .inline-row{display:flex;gap:8px;align-items:center}
+
+    /* ── 토스트 ── */
+    .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface3);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 18px;font-size:13px;font-weight:600;color:var(--text);pointer-events:none;opacity:0;transition:opacity 0.2s,transform 0.2s;z-index:600;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* ── 반응형 ── */
+    .menu-btn{display:none;width:34px;height:34px;border-radius:var(--r-xs);background:var(--surface2);border:1px solid var(--border);color:var(--text-2);cursor:pointer;align-items:center;justify-content:center;font-size:16px}
+    @media(max-width:900px){
+      .sidebar{transform:translateX(-100%)}
+      .sidebar.open{transform:none}
+      .main{margin-left:0}
+      .topbar{left:0}
+      .menu-btn{display:flex}
+      .topbar-icon-btn{padding:0 9px;font-size:12px}
+      .select-bar{max-width:120px}
+      .modal-grid{grid-template-columns:1fr}
+    }
+    /* ── 카드 상세 모달 ── */
+    .detail-modal{max-width:920px;width:min(920px,94vw)}
+    .detail-title{font-size:19px;font-weight:800;line-height:1.4;margin-bottom:10px;letter-spacing:-0.4px}
+    .modal-title.detail-heading{font-size:19px;font-weight:800;line-height:1.4;letter-spacing:-0.4px;color:#f8fafc;text-transform:none}
+    .detail-main-content{width:100%;box-sizing:border-box;font-size:13px;line-height:1.7;color:#d6dbe4;white-space:pre-wrap;word-break:break-word;margin:8px 0 18px;padding:16px;border:1px solid rgba(255,255,255,0.24);border-radius:var(--r-xs);background:#2b303a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}
+    .detail-desc{width:100%;box-sizing:border-box;font-size:13px;line-height:1.65;color:#d6dbe4;white-space:pre-wrap;word-break:break-word;margin:8px 0 18px;padding:0 0 0 12px;border-left:3px solid rgba(174,182,196,0.9)}
+    .detail-code-block{width:100%;box-sizing:border-box;background:#2b303a;border:1px solid rgba(255,255,255,0.24);border-radius:var(--r-xs);padding:16px;overflow:auto;max-height:360px;margin-bottom:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}
+    .detail-code-block code{font-family:'SF Mono','Fira Code','Cascadia Code',monospace;font-size:13px;line-height:1.7;color:#d6dbe4;white-space:pre;display:block}
+    #detail-body .url-pill{font-size:13px;padding:10px 12px}
+    .detail-link-bar{border-radius:var(--r-sm);padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:14px;cursor:pointer;text-decoration:none;transition:opacity 0.15s}
+    .detail-link-bar:hover{opacity:0.88}
+    .detail-img-grid{width:100%;box-sizing:border-box;display:grid;gap:8px;border-radius:var(--r-sm);overflow:visible;margin-bottom:14px}
+    .detail-img-grid.n1{grid-template-columns:1fr}
+    .detail-img-grid.n2{grid-template-columns:1fr 1fr}
+    .detail-img-grid.n3{grid-template-columns:1fr 1fr}
+    .detail-img-grid.n4plus{grid-template-columns:1fr 1fr 1fr}
+    .detail-img-item{position:relative;overflow:hidden;border-radius:8px;cursor:pointer;aspect-ratio:4/3;background:var(--surface2)}
+    .detail-img-grid.n1 .detail-img-item{aspect-ratio:16/9}
+    .detail-img-item img{width:100%;height:100%;object-fit:cover;transition:transform 0.2s;display:block}
+    .detail-img-item:hover img{transform:scale(1.03)}
+    .detail-section-title{font-size:11px;font-weight:900;color:#aeb6c4;letter-spacing:0.08em;text-transform:uppercase;margin:18px 0 8px}
+    .detail-time{font-size:12px;color:#9aa4b3;font-weight:700;margin:0 0 14px}
+    .detail-meta{display:flex;flex-direction:column;gap:7px;margin:18px 0 0;padding:12px 0 0;border-top:1px solid rgba(255,255,255,0.18)}
+    .detail-meta-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .detail-meta-label{width:52px;flex-shrink:0;font-size:10px;font-weight:900;color:#aeb6c4;letter-spacing:0.08em;text-transform:uppercase}
+    .detail-meta-value{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-height:22px;color:var(--text-2);font-size:12px;flex:1}
+    .detail-meta .tag,.detail-meta .foot-coll{font-size:11px;padding:3px 8px}
+    .detail-save-btn{padding:8px 12px;border-radius:var(--r-xs);background:#2d3340;border:1px solid rgba(255,255,255,0.22);color:var(--text-2);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+    .detail-save-btn:hover{background:var(--surface3);color:var(--text)}
+    .edit-modal-wide{max-width:800px;width:min(800px,94vw)}
+    .edit-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .edit-section-title{display:none}
+    .edit-fields .modal-field.full{grid-column:1/-1}
+
+    /* 다크 모드: 화이트 모드 구조를 그대로 어둡게 반전 */
+    [data-theme="dark"] body{background:#08090b}
+    [data-theme="dark"] .sidebar{background:linear-gradient(180deg,#101113 0%,#0b0c0e 100%);border-right-color:rgba(255,255,255,0.12)}
+    [data-theme="dark"] .topbar{background:rgba(10,11,13,0.9);border-bottom-color:rgba(255,255,255,0.1);box-shadow:0 1px 0 rgba(255,255,255,0.03),0 14px 34px rgba(0,0,0,0.45)}
+    [data-theme="dark"] .board-wrap{background:radial-gradient(circle at top left,rgba(255,255,255,0.035),transparent 320px),#08090b}
+    [data-theme="dark"] .modal{background:linear-gradient(180deg,#191b1f 0%,#14161a 100%);border-color:rgba(255,255,255,0.16);box-shadow:0 24px 52px rgba(0,0,0,0.62),inset 0 1px 0 rgba(255,255,255,0.05)}
+    [data-theme="dark"] .card{background:linear-gradient(180deg,#17191d 0%,#121315 100%);border-color:rgba(255,255,255,0.13);box-shadow:0 18px 40px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.035)}
+    [data-theme="dark"] .card:hover{border-color:rgba(255,255,255,0.22);box-shadow:0 22px 52px rgba(0,0,0,0.58),inset 0 1px 0 rgba(255,255,255,0.05);transform:translateY(-1px)}
+    [data-theme="dark"] .btn-add,
+    [data-theme="dark"] .search-wrap,
+    [data-theme="dark"] .topbar-icon-btn,
+    [data-theme="dark"] .modal-close,
+    [data-theme="dark"] .btn-cancel,
+    [data-theme="dark"] .detail-save-btn,
+    [data-theme="dark"] .card-action-btn,
+    [data-theme="dark"] .icon-btn,
+    [data-theme="dark"] .foot-coll{background:#17191d;border-color:rgba(255,255,255,0.14);color:var(--text-2);box-shadow:none}
+    [data-theme="dark"] .btn-add{color:var(--text);font-weight:800}
+    [data-theme="dark"] .topbar-icon-btn:hover,
+    [data-theme="dark"] .modal-close:hover,
+    [data-theme="dark"] .btn-cancel:hover,
+    [data-theme="dark"] .detail-save-btn:hover,
+    [data-theme="dark"] .card-action-btn:hover,
+    [data-theme="dark"] .icon-btn:hover{background:#22252a;border-color:rgba(255,255,255,0.22);color:var(--text)}
+    [data-theme="dark"] .memo-content,
+    [data-theme="dark"] .card-text-box,
+    [data-theme="dark"] .url-pill,
+    [data-theme="dark"] .code-block,
+    [data-theme="dark"] .detail-main-content,
+    [data-theme="dark"] .detail-code-block,
+    [data-theme="dark"] .modal-input,
+    [data-theme="dark"] .tag-input-wrap,
+    [data-theme="dark"] .add-file-btn,
+    [data-theme="dark"] .attach-preview-card,
+    [data-theme="dark"] .add-modal .modal-input,
+    [data-theme="dark"] .edit-modal-wide .modal-input,
+    [data-theme="dark"] .add-modal .tag-input-wrap,
+    [data-theme="dark"] .edit-modal-wide .tag-input-wrap,
+    [data-theme="dark"] .add-modal .add-file-btn,
+    [data-theme="dark"] .edit-modal-wide .add-file-btn,
+    [data-theme="dark"] .add-modal .attach-preview-card,
+    [data-theme="dark"] .edit-modal-wide .attach-preview-card{background:#1d2025;border-color:rgba(255,255,255,0.13);box-shadow:none;color:var(--text-2)}
+    [data-theme="dark"] .modal-input:focus,
+    [data-theme="dark"] .tag-input-wrap:focus-within,
+    [data-theme="dark"] .add-modal .modal-input:focus,
+    [data-theme="dark"] .edit-modal-wide .modal-input:focus,
+    [data-theme="dark"] .add-modal .tag-input-wrap:focus-within,
+    [data-theme="dark"] .edit-modal-wide .tag-input-wrap:focus-within{background:#24272d;border-color:rgba(255,255,255,0.22)}
+    [data-theme="dark"] .link-preview{background:linear-gradient(135deg,#a31555 0%,#c23d87 100%)!important;border:1px solid rgba(255,255,255,0.08);box-shadow:0 8px 18px rgba(0,0,0,0.22)}
+    [data-theme="dark"] .link-preview-initial{background:rgba(255,255,255,0.08);color:var(--text)}
+    [data-theme="dark"] .link-preview-host{color:var(--text)}
+    [data-theme="dark"] .link-preview-scheme,
+    [data-theme="dark"] .link-preview-arrow{color:var(--text-3)}
+    [data-theme="dark"] .detail-code-block code,
+    [data-theme="dark"] .code-block code,
+    [data-theme="dark"] .detail-main-content,
+    [data-theme="dark"] .detail-desc,
+    [data-theme="dark"] .memo-content,
+    [data-theme="dark"] .card-text-box{color:var(--text-2)}
+    [data-theme="dark"] .support-desc,
+    [data-theme="dark"] .detail-desc{border-left-color:var(--border-hover)}
+    [data-theme="dark"] .detail-meta,
+    [data-theme="dark"] .card-foot,
+    [data-theme="dark"] .modal-actions{border-color:var(--border)}
+    [data-theme="dark"] #detail-body .tag{background:#17191d!important;color:var(--text-2)!important;border-color:rgba(255,255,255,0.14)!important}
+    [data-theme="dark"] .detail-save-btn[data-act]{background:#17191d;border-color:rgba(255,255,255,0.14);color:var(--text-2)}
+    [data-theme="dark"] .detail-save-btn[data-act]:hover{background:#22252a;border-color:rgba(255,255,255,0.22);color:var(--text)}
+    [data-theme="dark"] .add-modal .coll-option:not(.checked),
+    [data-theme="dark"] .edit-modal-wide .coll-option:not(.checked),
+    [data-theme="dark"] .add-modal .type-option:not(.checked),
+    [data-theme="dark"] .edit-modal-wide .type-option:not(.checked){background:#17191d;border-color:rgba(255,255,255,0.14);color:var(--text-2)}
+    [data-theme="dark"] .attach-preview-icon,
+    [data-theme="dark"] .attach-preview-state{background:#24272d;border-color:rgba(255,255,255,0.14);color:var(--text-2)}
+    [data-theme="dark"] .attach-preview-name{color:var(--text)}
+    [data-theme="dark"] .code-fade{background:linear-gradient(transparent,var(--surface2))}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- ── 사이드바 ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-row">
+      <span class="logo">Stash</span>
+      <span class="logo-badge">개인</span>
+    </div>
+
+    <!-- 로그인 / 프로필 -->
+    <div id="auth-section">
+      <div id="login-btn-wrap">
+        <button class="btn-auth-open" id="btn-auth-open">🔑 로그인 / 회원가입</button>
+      </div>
+      <div id="user-profile" style="display:none">
+        <div class="profile-avatar" id="profile-avatar">?</div>
+        <div class="profile-info">
+          <span class="profile-name" id="profile-name"></span>
+          <span class="profile-id" id="profile-id"></span>
+          <span class="profile-email" id="profile-email"></span>
+        </div>
+        <button class="btn-logout" id="btn-logout" title="로그아웃">↩</button>
+      </div>
+    </div>
+
+    <!-- 새 카드 -->
+    <div>
+      <button class="btn-add" id="add-btn">+ 새 카드</button>
+    </div>
+
+    <!-- 카테고리 필터 -->
+    <div>
+      <div class="section-label">카테고리</div>
+      <div id="type-filters"></div>
+      <div id="custom-cats"></div>
+      <button class="btn-add-category" id="btn-add-cat">+ 카테고리 추가</button>
+    </div>
+
+    <!-- AI 태그 -->
+    <div>
+      <div class="section-label">태그</div>
+      <div id="tag-list"><span style="font-size:11px;color:var(--text-3);padding:4px 8px">태그가 없어요</span></div>
+    </div>
+
+    <!-- 컬렉션 -->
+    <div>
+      <div class="section-label">컬렉션</div>
+      <div id="coll-list"></div>
+      <button class="btn-new-collection" id="btn-new-coll">+ 새 컬렉션</button>
+    </div>
+
+    <!-- 통계 -->
+    <div class="stats">
+      <div class="stat"><span class="stat-num" id="stat-total">0</span><span class="stat-label">카드</span></div>
+      <div class="stat"><span class="stat-num" id="stat-tags">0</span><span class="stat-label">태그</span></div>
+      <div class="stat"><span class="stat-num" id="stat-colls">0</span><span class="stat-label">컬렉션</span></div>
+    </div>
+  </aside>
+
+  <!-- ── 메인 ── -->
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menu-btn">☰</button>
+      <div class="topbar-project-label">개인 공간</div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="search-input" placeholder="검색... (Ctrl+K)" />
+      </div>
+      <button class="btn-clear-filter" id="clear-filter" style="display:none">필터 초기화</button>
+      <button class="topbar-icon-btn" id="select-mode-btn" title="선택 모드">✓ 선택</button>
+      <button class="topbar-icon-btn selection-tool" id="select-all-btn" title="보이는 카드 전체 선택">☑ 전체 선택</button>
+      <div class="select-bar" id="select-bar"><span id="select-count">0개 선택</span><button class="select-clear" id="select-clear" title="선택 해제">✕</button></div>
+      <button class="topbar-icon-btn danger selection-tool" id="delete-selected-btn" title="선택 또는 보이는 카드 삭제">삭제</button>
+      <button class="topbar-icon-btn" id="sort-btn" title="최신순">↕ 정렬</button>
+      <button class="topbar-icon-btn" id="export-btn" title="내보내기">↓ 내보내기</button>
+      <button class="topbar-icon-btn" id="theme-toggle" title="테마">☀ 테마</button>
+    </header>
+    <div class="board-wrap">
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">🗂</div>
+        <p class="empty-title">뭐든 던져주세요</p>
+        <p class="empty-desc">URL · 이미지 · 코드 · 텍스트<br>자동으로 분류·태그·정리해드려요</p>
+      </div>
+      <div id="board" style="display:none"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ── 인증 오버레이 (기본 숨김) ── -->
+<div id="auth-overlay" style="display:none">
+  <div class="auth-bg-glow"></div>
+  <div class="auth-card">
+    <div class="auth-logo-row">
+      <span class="auth-logo-text">Stash</span>
+      <span class="auth-logo-sub">개인 보관함</span>
+    </div>
+    <p class="auth-tagline">링크·이미지·코드·메모를 한 곳에</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">로그인</button>
+      <button class="auth-tab" data-tab="signup">회원가입</button>
+    </div>
+    <div id="auth-error"></div>
+    <!-- 로그인 폼 -->
+    <div id="auth-login-form" class="auth-form">
+      <div class="auth-field">
+        <label class="auth-label">이메일</label>
+        <input type="email" class="auth-input" id="auth-login-email" placeholder="email@example.com" autocomplete="email" />
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">비밀번호</label>
+        <div class="auth-pw-wrap">
+          <input type="password" class="auth-input" id="auth-login-pw" placeholder="비밀번호" autocomplete="current-password" />
+          <button type="button" class="auth-pw-toggle" data-for="auth-login-pw">👁</button>
+        </div>
+      </div>
+      <button type="button" class="auth-submit" id="login-submit">로그인</button>
+    </div>
+    <!-- 회원가입 폼 -->
+    <div id="auth-signup-form" class="auth-form" style="display:none">
+      <div class="auth-field">
+        <label class="auth-label">이름</label>
+        <input type="text" class="auth-input" id="auth-signup-name" placeholder="홍길동" maxlength="24" autocomplete="name" />
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">아이디</label>
+        <input type="text" class="auth-input" id="auth-signup-id" placeholder="영문·숫자·_ (2~20자)" maxlength="20" />
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">이메일</label>
+        <input type="email" class="auth-input" id="auth-signup-email" placeholder="email@example.com" autocomplete="email" />
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">비밀번호</label>
+        <div class="auth-pw-wrap">
+          <input type="password" class="auth-input" id="auth-signup-pw" placeholder="8자 이상" autocomplete="new-password" />
+          <button type="button" class="auth-pw-toggle" data-for="auth-signup-pw">👁</button>
+        </div>
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">비밀번호 확인</label>
+        <div class="auth-pw-wrap">
+          <input type="password" class="auth-input" id="auth-signup-pw2" placeholder="비밀번호 재입력" autocomplete="new-password" />
+          <button type="button" class="auth-pw-toggle" data-for="auth-signup-pw2">👁</button>
+        </div>
+      </div>
+      <button type="button" class="auth-submit" id="signup-submit">가입하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 새 카드 모달 ── -->
+<div class="modal-overlay" id="add-overlay">
+  <div class="modal add-modal">
+    <div class="modal-header">
+      <span class="modal-title">새 카드</span>
+      <button class="modal-close" id="add-close">✕</button>
+    </div>
+    <div class="modal-grid">
+      <div class="modal-field">
+        <label class="modal-label">제목</label>
+        <input type="text" class="modal-input" id="add-title" placeholder="카드 제목" />
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">태그 <span style="font-weight:400;text-transform:none;letter-spacing:0">(Enter/쉼표로 추가)</span></label>
+        <div class="tag-input-wrap" id="add-tags-wrap">
+          <input type="text" class="tag-input" id="add-tag-input" placeholder="태그 입력..." />
+        </div>
+      </div>
+      <div class="modal-field full">
+        <label class="modal-label">본문</label>
+        <div class="field-hint">메모로 보여줄 내용입니다. 링크나 코드는 아래 전용 칸에 넣으면 더 깔끔하게 저장됩니다.</div>
+        <textarea class="modal-input modal-textarea large" id="add-content" placeholder="자유롭게 메모..."></textarea>
+      </div>
+      <div class="modal-field full">
+        <label class="modal-label">URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(최대 5개, 이름 지정 가능)</span></label>
+        <div class="field-hint">한 줄에 하나씩 `이름 | https://...` 형식으로 넣을 수 있습니다.</div>
+        <textarea class="modal-input modal-textarea" id="add-url" rows="3" placeholder="공식 문서 | https://..."></textarea>
+      </div>
+      <div class="modal-field full">
+        <label class="modal-label">링크 설명</label>
+        <div class="field-hint">링크 카드의 미리보기 설명이나 짧은 부제목입니다.</div>
+        <textarea class="modal-input modal-textarea" id="add-desc" rows="2" placeholder="링크 설명 또는 부제목..."></textarea>
+      </div>
+      <div class="modal-field full">
+        <label class="modal-label">코드</label>
+        <div class="field-hint">코드 조각을 같이 보관할 때 사용합니다.</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+          <span style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.06em;text-transform:uppercase">언어:</span>
+          <input type="text" class="modal-input" id="add-lang" placeholder="javascript" style="max-width:140px;padding:6px 10px;font-size:13px" />
+        </div>
+        <textarea class="modal-input modal-textarea code" id="add-code" rows="8" placeholder="코드 스니펫..."></textarea>
+      </div>
+      <div class="modal-field full">
+        <label class="modal-label">이미지</label>
+        <input type="text" class="modal-input" id="add-caption" placeholder="이미지 캡션" style="margin-bottom:8px" />
+        <label class="add-file-btn">
+          <span id="add-file-label">이미지 선택</span>
+          <input type="file" id="add-image-input" accept="image/*" multiple />
+        </label>
+        <div id="add-image-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+      </div>
+      <div class="modal-field full">
+        <label class="modal-label">파일 첨부 <span style="font-weight:400;text-transform:none;letter-spacing:0">PDF, ZIP 등 (파일당 최대 10MB)</span></label>
+        <label class="add-file-btn">
+          <span id="add-attach-label">파일 선택</span>
+          <input type="file" id="add-attach-input" multiple />
+        </label>
+        <div id="add-attach-preview" class="attach-preview-list"></div>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">카테고리 <span style="font-weight:400;text-transform:none;letter-spacing:0">다중 선택 가능</span></label>
+        <div class="coll-options" id="add-cat-options"></div>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">컬렉션</label>
+        <div class="coll-options" id="add-coll-options"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="add-cancel">취소</button>
+      <button class="btn-confirm" id="add-save">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 카드 편집 모달 ── -->
+<div class="modal-overlay" id="edit-overlay">
+  <div class="modal edit-modal-wide">
+    <div class="modal-header">
+      <span class="modal-title" id="edit-type-badge"></span>
+      <button class="modal-close" id="edit-close">✕</button>
+    </div>
+    <div class="edit-fields" id="edit-fields">
+      <div class="edit-section-title" id="edit-main-section">핵심 내용</div>
+      <div class="modal-field" id="edit-title-wrap">
+        <label class="modal-label">제목</label>
+        <input type="text" class="modal-input" id="edit-title" />
+      </div>
+      <div class="modal-field" id="edit-tags-field">
+        <label class="modal-label">태그</label>
+        <div class="tag-input-wrap" id="edit-tags-wrap">
+          <input type="text" class="tag-input" id="edit-tag-input" placeholder="태그 입력..." />
+        </div>
+      </div>
+      <div class="modal-field full" id="edit-content-wrap">
+        <label class="modal-label" id="edit-content-label">본문</label>
+        <div class="field-hint" id="edit-content-hint">메모로 보여줄 내용입니다.</div>
+        <textarea class="modal-input modal-textarea large" id="edit-content" rows="4" placeholder="자유롭게 메모..."></textarea>
+      </div>
+      <div class="edit-section-title" id="edit-extra-section">추가 요소</div>
+      <div class="modal-field full edit-optional" id="edit-url-wrap">
+        <label class="modal-label">URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(최대 5개, 이름 지정 가능)</span></label>
+        <div class="field-hint">한 줄에 하나씩 `이름 | https://...` 형식으로 넣을 수 있습니다.</div>
+        <textarea class="modal-input modal-textarea" id="edit-url" rows="3" placeholder="공식 문서 | https://..."></textarea>
+      </div>
+      <div class="modal-field full edit-optional" id="edit-desc-wrap">
+        <label class="modal-label" id="edit-desc-label">링크 설명</label>
+        <div class="field-hint" id="edit-desc-hint">링크 카드의 미리보기 설명이나 짧은 부제목입니다.</div>
+        <textarea class="modal-input modal-textarea" id="edit-desc" rows="2" placeholder="링크 설명 또는 부제목..."></textarea>
+      </div>
+      <div class="modal-field full edit-optional" id="edit-code-wrap">
+        <label class="modal-label">코드</label>
+        <div class="field-hint">메모에 코드 조각을 같이 보관할 때만 사용합니다.</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+          <span style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.06em;text-transform:uppercase">언어:</span>
+          <input type="text" class="modal-input" id="edit-lang" placeholder="javascript" style="max-width:140px;padding:6px 10px;font-size:13px" />
+        </div>
+        <textarea class="modal-input modal-textarea code" id="edit-code" rows="8" placeholder="코드 스니펫..."></textarea>
+      </div>
+      <div class="modal-field full edit-optional" id="edit-caption-wrap">
+        <label class="modal-label">이미지 캡션</label>
+        <input type="text" class="modal-input" id="edit-caption" />
+      </div>
+      <div class="modal-field full edit-optional" id="edit-image-wrap">
+        <label class="modal-label">이미지 추가/교체</label>
+        <div class="field-hint">이미지가 필요한 메모일 때만 추가하세요.</div>
+        <label class="add-file-btn">
+          <span id="edit-file-label">이미지 선택</span>
+          <input type="file" id="edit-image-input" accept="image/*" multiple />
+        </label>
+        <div id="edit-image-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+      </div>
+      <div class="modal-field full" id="edit-attach-wrap">
+        <label class="modal-label">파일 첨부 <span style="font-weight:400;text-transform:none;letter-spacing:0">PDF, ZIP 등</span></label>
+        <label class="add-file-btn">
+          <span id="edit-attach-label">파일 선택</span>
+          <input type="file" id="edit-attach-input" multiple />
+        </label>
+        <div id="edit-attach-preview" class="attach-preview-list"></div>
+      </div>
+      <div class="modal-field" id="edit-cats-field">
+        <label class="modal-label">카테고리 <span style="font-weight:400;text-transform:none;letter-spacing:0">다중 선택 가능</span></label>
+        <div class="coll-options" id="edit-cat-options"></div>
+      </div>
+      <div class="modal-field" id="edit-colls-field">
+        <label class="modal-label">컬렉션</label>
+        <div class="coll-options" id="edit-coll-options"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="edit-cancel">취소</button>
+      <button class="btn-confirm" id="edit-save">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 카드 상세 모달 ── -->
+<div class="modal-overlay" id="detail-overlay">
+  <div class="modal detail-modal">
+    <div class="modal-header">
+      <span class="modal-title" id="detail-type-badge"></span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="card-action-btn" id="detail-edit-btn" title="편집">✎</button>
+        <button class="card-action-btn del" id="detail-del-btn" title="삭제">🗑</button>
+        <button class="modal-close" id="detail-close">✕</button>
+      </div>
+    </div>
+    <div id="detail-body"></div>
+    <div id="detail-footer" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap"></div>
+  </div>
+</div>
+
+<!-- ── 컬렉션 모달 ── -->
+<div class="modal-overlay" id="coll-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">새 컬렉션</span>
+      <button class="modal-close" id="coll-close">✕</button>
+    </div>
+    <div class="inline-row">
+      <button class="emoji-btn" id="coll-emoji">📁</button>
+      <input type="text" class="modal-input" id="coll-name" placeholder="컬렉션 이름..." maxlength="30" style="flex:1" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="coll-cancel">취소</button>
+      <button class="btn-confirm" id="coll-confirm">만들기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 카테고리 모달 ── -->
+<div class="modal-overlay" id="cat-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">카테고리 추가</span>
+      <button class="modal-close" id="cat-close">✕</button>
+    </div>
+    <div class="inline-row">
+      <button class="emoji-btn" id="cat-emoji">🏷</button>
+      <input type="text" class="modal-input" id="cat-name" placeholder="카테고리 이름..." maxlength="20" style="flex:1" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="cat-cancel">취소</button>
+      <button class="btn-confirm" id="cat-confirm">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 컬렉션 삭제 확인 모달 ── -->
+<div class="modal-overlay" id="del-coll-overlay">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">컬렉션 삭제</span></div>
+    <p id="del-coll-msg" style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:4px"></p>
+    <p style="font-size:12px;color:#f87171;margin-top:6px">⚠ 삭제 후 복구할 수 없습니다.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="del-coll-cancel">취소</button>
+      <button class="btn-danger" id="del-coll-confirm">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 카드 삭제 확인 모달 ── -->
+<div class="modal-overlay" id="del-card-overlay">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">카드 삭제</span></div>
+    <p id="del-card-msg" style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:4px"></p>
+    <p style="font-size:12px;color:#f87171;margin-top:6px">⚠ 삭제 후 복구할 수 없습니다.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="del-card-cancel">취소</button>
+      <button class="btn-danger" id="del-card-confirm">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 카테고리 삭제 확인 모달 ── -->
+<div class="modal-overlay" id="del-cat-overlay">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">카테고리 삭제</span></div>
+    <p id="del-cat-msg" style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:4px"></p>
+    <p style="font-size:12px;color:#f87171;margin-top:6px">⚠ 삭제 후 복구할 수 없습니다.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="del-cat-cancel">취소</button>
+      <button class="btn-danger" id="del-cat-confirm">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 내보내기 선택 모달 ── -->
+<div class="modal-overlay" id="export-choice-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">내보내기 방식 선택</span>
+      <button class="modal-close" id="export-choice-close">✕</button>
+    </div>
+    <p id="export-choice-msg" style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:4px"></p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="export-choice-cancel">취소</button>
+      <button class="btn-confirm" id="export-choice-files">개별 저장</button>
+      <button class="btn-confirm" id="export-choice-zip">ZIP 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 태그 삭제 확인 모달 ── -->
+<div class="modal-overlay" id="del-tag-overlay">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">태그 삭제</span></div>
+    <p id="del-tag-msg" style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:4px"></p>
+    <p style="font-size:12px;color:#f87171;margin-top:6px">⚠ 삭제 후 복구할 수 없습니다.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="del-tag-cancel">취소</button>
+      <button class="btn-danger" id="del-tag-confirm">삭제</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ── 라이트박스 ── -->
+<div id="lightbox">
+  <button class="lb-close" id="lb-close">✕</button>
+  <button class="lb-prev" id="lb-prev">‹</button>
+  <img id="lb-img" src="" alt="" />
+  <button class="lb-next" id="lb-next">›</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  Stash — 완전 자립형 단일 파일 웹 앱 (순수 JavaScript)
+// ══════════════════════════════════════════════════════════
+
+var ST = {
+  cards: [], collections: [], categories: [],
+  userId: '', userName: '', userEmail: '',
+  filterType: 'all', filterTag: '', filterCollId: '', filterCatId: '',
+  searchQuery: '', sortOrder: 'newest',
+  editingId: null,
+  addTags: [], editTags: [], addTypes: [],
+  selectedIds: [], selectionMode: false,
+  deletingCollId: null,
+  collEmoji: '📁', catEmoji: '🏷'
+}
+
+// ── 유틸 ──────────────────────────────────────────────────
+function uuid() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+  })
+}
+
+function hashPw(text) {
+  var h = 5381
+  for (var i = 0; i < text.length; i++) h = (((h << 5) + h) + text.charCodeAt(i)) >>> 0
+  return h.toString(36) + text.length.toString(36)
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+function fmtDate(ts) {
+  var d = (Date.now() - ts) / 1000
+  if (d < 60) return '방금 전'
+  if (d < 3600) return Math.floor(d/60) + '분 전'
+  if (d < 86400) return Math.floor(d/3600) + '시간 전'
+  var dt = new Date(ts)
+  return (dt.getMonth()+1) + '/' + dt.getDate()
+}
+
+function tagColor(tag) {
+  var h = 0
+  for (var i = 0; i < tag.length; i++) h = (h * 31 + tag.charCodeAt(i)) & 0x7fffffff
+  var colors = ['#60a5fa','#4ade80','#fb923c','#c084fc','#f87171','#34d399','#fbbf24','#38bdf8']
+  return colors[h % colors.length]
+}
+
+function domainGrad(domain) {
+  var pals = [['#1d4ed8','#3b82f6'],['#065f46','#059669'],['#92400e','#d97706'],['#6d28d9','#8b5cf6'],['#9d174d','#ec4899'],['#0e7490','#06b6d4']]
+  var h = 0
+  for (var i = 0; i < domain.length; i++) h = (h * 31 + domain.charCodeAt(i)) & 0x7fffffff
+  var p = pals[h % pals.length]
+  return 'linear-gradient(135deg,' + p[0] + ',' + p[1] + ')'
+}
+
+function getCardCategoryIds(card) {
+  var ids = (card.categoryIds || []).slice()
+  var add = function(id) { if (id && ids.indexOf(id) < 0) ids.push(id) }
+  ;(card.kinds || []).forEach(function(k) {
+    var entry = TYPE_CAT_ENTRIES.find(function(c){ return c.typeVal === k })
+    if (entry) add(entry.id)
+  })
+  if (!ids.length) {
+    var typeEntry = TYPE_CAT_ENTRIES.find(function(c){ return c.typeVal === (card.type || 'memo') })
+    if (typeEntry) add(typeEntry.id)
+  }
+  return ids
+}
+
+function cardHasCategory(card, catId) {
+  return getCardCategoryIds(card).indexOf(catId) >= 0
+}
+
+function normalizeUrls(list) {
+  var seen = {}, out = []
+  ;(list || []).forEach(function(u) {
+    u = String(u || '').trim().replace(/[),.;]+$/, '')
+    if (!/^https?:\/\//i.test(u)) return
+    if (!seen[u] && out.length < 5) { seen[u] = 1; out.push(u) }
+  })
+  return out
+}
+
+function extractUrls(text) {
+  return normalizeUrls(String(text || '').match(/https?:\/\/[^\s<>"']+/gi) || [])
+}
+
+function getCardUrls(card) {
+  var linkUrls = (card.links || card.linkItems || []).map(function(l){ return typeof l === 'string' ? l : (l && l.url) })
+  return normalizeUrls((card.urls || []).concat(linkUrls).concat(card.url ? [card.url] : []))
+}
+
+function linkLabelFromUrl(url) {
+  try { return new URL(url).hostname.replace(/^www\./, '') } catch(e) { return url || 'link' }
+}
+
+function parseLinkLines(text) {
+  var links = []
+  String(text || '').split(/\n+/).forEach(function(line) {
+    line = line.trim()
+    if (!line) return
+    var urls = extractUrls(line)
+    if (!urls.length) return
+    var url = urls[0]
+    var label = line.replace(url, '').replace(/[|:：\-–—]+/g, ' ').trim()
+    links.push({ url:url, label:label || linkLabelFromUrl(url) })
+  })
+  return normalizeLinks(links)
+}
+
+function normalizeLinks(list) {
+  var seen = {}, out = []
+  ;(list || []).forEach(function(item) {
+    if (!item) return
+    var url = typeof item === 'string' ? item : item.url
+    url = normalizeUrls([url])[0]
+    if (!url || seen[url] || out.length >= 5) return
+    seen[url] = 1
+    out.push({ url:url, label:(typeof item === 'string' ? '' : item.label) || linkLabelFromUrl(url) })
+  })
+  return out
+}
+
+function getCardLinks(card) {
+  var links = normalizeLinks(card.links || card.linkItems || [])
+  var urls = getCardUrls(card)
+  urls.forEach(function(url){ if (!links.some(function(l){ return l.url === url })) links.push({ url:url, label:linkLabelFromUrl(url) }) })
+  return links.slice(0, 5)
+}
+
+function linksText(cardOrLinks) {
+  var links = Array.isArray(cardOrLinks) ? normalizeLinks(cardOrLinks) : getCardLinks(cardOrLinks || {})
+  return links.map(function(l){ return (l.label ? l.label + ' | ' : '') + l.url }).join('\n')
+}
+
+function getAuthorName(card) {
+  if (card.authorName) return card.authorName
+  if (card.ownerId === ST.userId) return ST.userName || card.ownerId || ''
+  var users = getUsers()
+  var u = users.find(function(user){ return user.id === card.ownerId })
+  return u ? u.name : (card.ownerId || '')
+}
+
+function getAccessibleCollections() {
+  if (!ST.userId) return []
+  return ST.collections.filter(function(c){ return c.ownerId === ST.userId })
+}
+
+function renderEditImagePreview(card, files) {
+  var preview = document.getElementById('edit-image-preview')
+  var fileLabel = document.getElementById('edit-file-label')
+  preview.innerHTML = ''
+  files = Array.from(files || [])
+  if (files.length) {
+    fileLabel.textContent = files.length + '장 선택됨'
+    files.forEach(function(file) {
+      var reader = new FileReader()
+      reader.onload = function(e) {
+        var wrap = document.createElement('div')
+        wrap.className = 'preview-thumb'
+        wrap.title = file.name
+        wrap.innerHTML = '<img src="'+e.target.result+'" alt="" />'
+        preview.appendChild(wrap)
+      }
+      reader.readAsDataURL(file)
+    })
+    return
+  }
+  var imgs = card && card.dataUrls && card.dataUrls.length ? card.dataUrls : (card && card.dataUrl ? [card.dataUrl] : [])
+  fileLabel.textContent = imgs.length ? '현재 ' + imgs.length + '장, 새 이미지 선택 가능' : '이미지 선택'
+  imgs.forEach(function(src) {
+    var wrap = document.createElement('div')
+    wrap.className = 'preview-thumb'
+    wrap.innerHTML = '<img src="'+src+'" alt="" />'
+    preview.appendChild(wrap)
+  })
+}
+
+var _toastTimer
+function showToast(msg) {
+  clearTimeout(_toastTimer)
+  var el = document.getElementById('toast')
+  el.textContent = msg
+  el.classList.add('show')
+  _toastTimer = setTimeout(function(){ el.classList.remove('show') }, 2500)
+}
+
+// ── IndexedDB (대용량 파일 대응) ───────────────────────────
+var _idb = null
+function openIDB(cb) {
+  if (_idb) { cb(_idb); return }
+  if (typeof indexedDB === 'undefined') { cb(null); return }
+  var req
+  try {
+    req = indexedDB.open('stash-idb', 1)
+  } catch(e) {
+    cb(null)
+    return
+  }
+  req.onupgradeneeded = function(e) {
+    var db = e.target.result
+    if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv')
+  }
+  req.onsuccess = function(e) { _idb = e.target.result; cb(_idb) }
+  req.onerror = function() { cb(null) }
+}
+function idbSet(key, val, cb) {
+  openIDB(function(db) {
+    if (!db) { try { localStorage.setItem(key, JSON.stringify(val)) } catch(e) { if(cb) cb(false); return } ; if(cb) cb(true); return }
+    var tx = db.transaction('kv', 'readwrite')
+    tx.objectStore('kv').put(val, key)
+    tx.oncomplete = function(){ if(cb) cb(true) }
+    tx.onerror = function(){ if(cb) cb(false) }
+  })
+}
+function idbGet(key, cb) {
+  openIDB(function(db) {
+    if (!db) { try { cb(JSON.parse(localStorage.getItem(key) || 'null')) } catch(e) { cb(null) } ; return }
+    var tx = db.transaction('kv', 'readonly')
+    var req = tx.objectStore('kv').get(key)
+    req.onsuccess = function(){ cb(req.result !== undefined ? req.result : null) }
+    req.onerror = function(){ cb(null) }
+  })
+}
+
+function save() {
+  idbSet('stash-cards', ST.cards)
+  idbSet('stash-collections', ST.collections)
+  idbSet('stash-categories', ST.categories)
+}
+
+function load(cb) {
+  var done = 0
+  function check() { done++; if (done === 3) {
+    ST.collections.forEach(function(c){ c.members = c.members || []; c.isShared = !!c.isShared })
+    if (cb) cb()
+  }}
+  // localStorage 구버전 마이그레이션
+  var oldCards = null, oldColls = null, oldCats = null
+  try { oldCards = JSON.parse(localStorage.getItem('stash-cards') || 'null') } catch(e){}
+  try { oldColls = JSON.parse(localStorage.getItem('stash-collections') || 'null') } catch(e){}
+  try { oldCats = JSON.parse(localStorage.getItem('stash-categories') || 'null') } catch(e){}
+  idbGet('stash-cards', function(v) {
+    ST.cards = v || oldCards || []
+    if (!v && oldCards) { idbSet('stash-cards', ST.cards); localStorage.removeItem('stash-cards') }
+    check()
+  })
+  idbGet('stash-collections', function(v) {
+    ST.collections = v || oldColls || []
+    if (!v && oldColls) { idbSet('stash-collections', ST.collections); localStorage.removeItem('stash-collections') }
+    check()
+  })
+  idbGet('stash-categories', function(v) {
+    ST.categories = v || oldCats || []
+    if (!v && oldCats) { idbSet('stash-categories', ST.categories); localStorage.removeItem('stash-categories') }
+    check()
+  })
+}
+
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem('stash-users') || '[]') } catch(e) { return [] }
+}
+function saveUsers(u) { localStorage.setItem('stash-users', JSON.stringify(u)) }
+
+function saveSession(user) {
+  localStorage.setItem('stash-session', JSON.stringify({
+    userId: user.id, userName: user.name, userEmail: user.email,
+    expiresAt: Date.now() + 1000*60*60*24*30
+  }))
+}
+
+function loadSession() {
+  try {
+    var raw = localStorage.getItem('stash-session')
+    if (!raw) return false
+    var s = JSON.parse(raw)
+    if (s && s.expiresAt > Date.now()) {
+      ST.userId = s.userId || ''
+      ST.userName = s.userName || ''
+      ST.userEmail = s.userEmail || ''
+      return !!(ST.userId && ST.userName)
+    }
+    localStorage.removeItem('stash-session')
+  } catch(e) { localStorage.removeItem('stash-session') }
+  return false
+}
+
+function isLoggedIn() { return !!(ST.userId && ST.userName) }
+
+// ── 인증 ──────────────────────────────────────────────────
+function openAuth(tab) {
+  tab = tab || 'login'
+  var overlay = document.getElementById('auth-overlay')
+  overlay.style.display = 'flex'
+  document.body.style.overflow = 'hidden'
+  setAuthError('')
+  clearAuthForms()
+  switchAuthTab(tab)
+}
+
+function closeAuth() {
+  document.getElementById('auth-overlay').style.display = 'none'
+  document.body.style.overflow = ''
+}
+
+function clearAuthForms() {
+  var ids = ['auth-login-email','auth-login-pw','auth-signup-name',
+             'auth-signup-id','auth-signup-email','auth-signup-pw','auth-signup-pw2']
+  ids.forEach(function(id) {
+    var el = document.getElementById(id)
+    if (el) el.value = ''
+  })
+}
+
+function setAuthError(msg) {
+  var el = document.getElementById('auth-error')
+  el.textContent = msg
+  el.style.display = msg ? 'block' : 'none'
+}
+
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(function(t) {
+    t.classList.toggle('active', t.dataset.tab === tab)
+  })
+  document.getElementById('auth-login-form').style.display = tab === 'login' ? 'flex' : 'none'
+  document.getElementById('auth-signup-form').style.display = tab === 'signup' ? 'flex' : 'none'
+  setAuthError('')
+  setTimeout(function() {
+    var id = tab === 'login' ? 'auth-login-email' : 'auth-signup-name'
+    var el = document.getElementById(id)
+    if (el) el.focus()
+  }, 50)
+}
+
+function doLogin() {
+  var email = document.getElementById('auth-login-email').value.trim().toLowerCase()
+  var pw = document.getElementById('auth-login-pw').value
+  if (!email || !pw) { setAuthError('이메일과 비밀번호를 입력해주세요'); return }
+  var users = getUsers()
+  var user = null
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].email === email) { user = users[i]; break }
+  }
+  if (!user) { setAuthError('등록되지 않은 이메일이에요. 회원가입을 먼저 해주세요'); return }
+  if (hashPw(pw + user.salt) !== user.passwordHash) { setAuthError('비밀번호가 틀렸어요'); return }
+  ST.userId = user.id; ST.userName = user.name; ST.userEmail = user.email
+  saveSession(user)
+  closeAuth()
+  renderLoginUI(); renderSidebar(); renderBoard()
+  showToast('다시 만나요, ' + user.name + '님!')
+}
+
+function doSignup() {
+  var name = document.getElementById('auth-signup-name').value.trim()
+  var id = document.getElementById('auth-signup-id').value.trim().toLowerCase()
+  var email = document.getElementById('auth-signup-email').value.trim().toLowerCase()
+  var pw = document.getElementById('auth-signup-pw').value
+  var pw2 = document.getElementById('auth-signup-pw2').value
+  if (!name) { setAuthError('이름을 입력해주세요'); return }
+  if (!id || !/^[a-z0-9_]{2,20}$/.test(id)) { setAuthError('아이디는 영문 소문자·숫자·밑줄 2~20자'); return }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setAuthError('이메일 형식이 올바르지 않아요'); return }
+  if (pw.length < 8) { setAuthError('비밀번호는 8자 이상이어야 해요'); return }
+  if (pw !== pw2) { setAuthError('비밀번호가 일치하지 않아요'); return }
+  var users = getUsers()
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].email === email) { setAuthError('이미 사용 중인 이메일이에요'); return }
+    if (users[i].id === id) { setAuthError('이미 사용 중인 아이디예요'); return }
+  }
+  var salt = uuid()
+  var user = { id: id, name: name, email: email, passwordHash: hashPw(pw + salt), salt: salt, createdAt: Date.now() }
+  users.push(user); saveUsers(users)
+  ST.userId = id; ST.userName = name; ST.userEmail = email
+  saveSession(user)
+  // 기본 카테고리 추가
+  ST.categories.push({ id: uuid(), name: '파일', color: '#f59e0b', ownerId: id })
+  save()
+  closeAuth()
+  renderLoginUI(); renderSidebar(); renderBoard()
+  showToast('환영해요, ' + name + '님! 🎉')
+}
+
+function doLogout() {
+  ST.userId = ''; ST.userName = ''; ST.userEmail = ''
+  localStorage.removeItem('stash-session')
+  renderLoginUI(); renderSidebar(); renderBoard()
+  showToast('로그아웃됐어요')
+}
+
+function requireLogin() {
+  if (isLoggedIn()) return true
+  openAuth('login')
+  return false
+}
+
+// ── 로그인 UI ─────────────────────────────────────────────
+function renderLoginUI() {
+  var loggedIn = isLoggedIn()
+  document.getElementById('login-btn-wrap').style.display = loggedIn ? 'none' : 'block'
+  var prof = document.getElementById('user-profile')
+  prof.style.display = loggedIn ? 'flex' : 'none'
+  if (loggedIn) {
+    document.getElementById('profile-avatar').textContent = ST.userName.charAt(0).toUpperCase()
+    document.getElementById('profile-name').textContent = ST.userName
+    document.getElementById('profile-id').textContent = '@' + ST.userId
+    document.getElementById('profile-email').textContent = ST.userEmail
+  }
+}
+
+// ── 카드 필터 ─────────────────────────────────────────────
+function getVisible() {
+  var v = ST.cards.filter(function(c) {
+    if (ST.userId && c.ownerId && c.ownerId !== ST.userId) return false
+    return true
+  })
+  if (ST.filterType !== 'all') v = v.filter(function(c){
+    if (ST.filterType === 'file') return (c.attachments && c.attachments.length > 0) || cardHasCategory(c, '__type_file')
+    return cardHasCategory(c, '__type_'+ST.filterType)
+  })
+  if (ST.filterTag) v = v.filter(function(c){ return (c.tags || []).indexOf(ST.filterTag) >= 0 })
+  if (ST.filterCollId) {
+    var coll = null
+    var accessible = getAccessibleCollections()
+    for (var i = 0; i < accessible.length; i++) {
+      if (accessible[i].id === ST.filterCollId) { coll = accessible[i]; break }
+    }
+    if (coll) v = v.filter(function(c){ return coll.cardIds.indexOf(c.id) >= 0 })
+  }
+  if (ST.filterCatId) v = v.filter(function(c){ return cardHasCategory(c, ST.filterCatId) })
+  if (ST.searchQuery) {
+    var q = ST.searchQuery.toLowerCase()
+    v = v.filter(function(c) {
+      return (c.title||'').toLowerCase().indexOf(q)>=0 ||
+             (c.description||'').toLowerCase().indexOf(q)>=0 ||
+             (c.content||'').toLowerCase().indexOf(q)>=0 ||
+             (c.code||'').toLowerCase().indexOf(q)>=0 ||
+             (c.caption||'').toLowerCase().indexOf(q)>=0 ||
+             (c.tags || []).some(function(t){ return String(t).toLowerCase().indexOf(q)>=0 }) ||
+             (c.url||'').toLowerCase().indexOf(q)>=0 ||
+             (c.urls||[]).some(function(u){ return u.toLowerCase().indexOf(q)>=0 })
+    })
+  }
+  v.sort(function(a,b) {
+    if (a.pinned && !b.pinned) return -1
+    if (!a.pinned && b.pinned) return 1
+    return ST.sortOrder === 'newest' ? (b.createdAt || 0) - (a.createdAt || 0) : (a.createdAt || 0) - (b.createdAt || 0)
+  })
+  return v
+}
+
+// ── 카드 DOM (혼합 콘텐츠 지원) ───────────────────────────
+function createCardEl(card) {
+  var el = document.createElement('div')
+  var selected = ST.selectedIds.indexOf(card.id) >= 0
+  el.className = 'card ' + card.type + (card.pinned ? ' pinned' : '') + (selected ? ' selected' : '') + (ST.selectionMode ? ' select-mode' : '')
+  el.dataset.id = card.id
+
+  // 선택한 카테고리를 모두 한 줄에 모아 보여줍니다.
+  var _catIds = getCardCategoryIds(card)
+  var catTopHtml = _catIds.map(function(cid) {
+    var typeCat = TYPE_CAT_ENTRIES.find(function(c){ return c.id === cid })
+    if (typeCat) {
+      return '<span class="kind-chip '+esc(typeCat.typeVal)+'">'+esc(typeCat.name)+'</span>'
+    }
+    var cat = ST.categories.find(function(c){ return c.id === cid })
+    if (!cat) return ''
+    var catIdx = ST.categories.findIndex(function(c){ return c.id === cid })
+    var cc = cat.color || CAT_COLORS[catIdx >= 0 ? catIdx % CAT_COLORS.length : 0]
+    return '<span class="badge" style="background:'+cc+'20;color:'+cc+';border:1px solid '+cc+'55">'+esc(cat.name)+'</span>'
+  }).join('')
+
+  var top = '<div class="card-top"><button class="card-select-btn" title="선택">✓</button>' + catTopHtml +
+    '<div class="card-actions">' +
+    '<button class="card-action-btn btn-edit" title="편집">✎</button>' +
+    '<button class="card-action-btn btn-pin' + (card.pinned ? ' pinned' : '') + '" title="' + (card.pinned ? '고정 해제' : '고정') + '"><span class="pin-icon">📌</span></button>' +
+    '<button class="card-action-btn del btn-del" title="삭제">✕</button>' +
+    '</div></div>'
+
+  // 태그 → 회색
+  var tagsHtml = (card.tags || []).map(function(t) {
+    return '<span class="tag" data-tag="' + esc(t) + '" style="background:var(--surface2);color:var(--text-2);border:1px solid var(--border)">#' + esc(t) + '</span>'
+  }).join('')
+  // 태그만 (kinds 배지 제외)
+  var tagsRow = tagsHtml ? '<div class="card-tags">' + tagsHtml + '</div>' : ''
+
+  var myColls = getAccessibleCollections().filter(function(c){ return c.cardIds && c.cardIds.indexOf(card.id)>=0 })
+  var collSpans = myColls.map(function(c){ return '<span class="foot-coll" title="'+esc(c.name)+'">'+c.emoji+' <span class="foot-coll-name">'+esc(c.name)+'</span></span>' }).join('')
+  // ── 혼합 콘텐츠 렌더링 ──
+  var imgs = card.dataUrls && card.dataUrls.length ? card.dataUrls : (card.dataUrl ? [card.dataUrl] : [])
+  var fnames = card.filenames && card.filenames.length ? card.filenames : (card.filename ? [card.filename] : ['image'])
+  var links = getCardLinks(card)
+  var urls = links.map(function(l){ return l.url })
+  var body = ''
+
+  // 0) 제목 (항상 맨 위)
+  var displayTitle = card.title || ''
+  if (displayTitle) {
+    body += '<p class="card-title">'+esc(displayTitle)+'</p>'
+  }
+
+  // 1) 이미지 그리드
+  if (imgs.length) {
+    var n = imgs.length
+    var gridClass = n===1?'n1':n===2?'n2':n===3?'n3':'n4plus'
+    var SHOW = n<=4 ? n : 4
+    var gridItems = imgs.slice(0, SHOW).map(function(src, i) {
+      var isLast = i === SHOW-1 && n > SHOW
+      return '<div class="img-grid-item" data-idx="'+i+'">' +
+        '<img src="'+src+'" alt="" />' +
+        (isLast ? '<div class="img-grid-more">+' + (n-SHOW+1) + '</div>' : '') +
+        '</div>'
+    }).join('')
+    body += '<div class="img-grid '+gridClass+'">'+gridItems+'</div>'
+    if (card.caption && card.caption !== displayTitle) {
+      body += '<div class="support-desc"><span class="support-desc-label">사진 설명</span><div class="support-desc-text">'+esc(card.caption)+'</div></div>'
+    }
+  } else if (card.caption) {
+    body += '<div class="support-desc"><span class="support-desc-label">이미지 설명</span><div class="support-desc-text">'+esc(card.caption)+'</div></div>'
+  }
+
+  // 2) 링크 미리보기 — 모든 링크 동일한 스타일
+  if (urls.length) {
+    body += links.map(function(l) {
+      var lu = l.url, ll = l.label
+      var ld = ''
+      try { ld = new URL(lu).hostname.replace(/^www\./, '') } catch(e) { ld = lu || '' }
+      return '<div class="link-preview lp-click" data-url="'+esc(lu)+'" style="background:'+domainGrad(ld)+'">' +
+        '<div class="link-preview-initial">'+esc((ll || ld).slice(0,2).toUpperCase())+'</div>' +
+        '<div class="link-preview-meta">' +
+        '<span class="link-preview-host">'+esc(ll || ld)+'</span>' +
+        '<span class="link-preview-scheme">link</span></div>' +
+        '<span class="link-preview-arrow">↗</span></div>'
+    }).join('')
+    if (card.description) {
+      body += '<div class="support-desc"><span class="support-desc-label">URL 설명</span><div class="support-desc-text">'+esc(card.description)+'</div></div>'
+    }
+  } else if (card.description) {
+    body += '<div class="support-desc"><span class="support-desc-label">설명</span><div class="support-desc-text">'+esc(card.description)+'</div></div>'
+  }
+
+  // 6) 메모 내용
+  if (card.content) {
+    body += '<p class="memo-content">'+esc(card.content)+'</p>'
+  }
+
+  // 7) 코드 블록
+  if (card.code) {
+    var lines = card.code.split('\n')
+    var display = lines.slice(0,16).join('\n')
+    body += '<div class="code-meta"><span class="code-lang-pill">'+esc(card.language||'text')+'</span></div>' +
+      '<div class="code-block"><code>'+esc(display)+'</code>'+(lines.length>16?'<div class="code-fade"></div>':'')+'</div>'
+  }
+
+  // 첨부파일 목록
+  var attaches = card.attachments && card.attachments.length ? card.attachments : []
+  if (attaches.length) {
+    body += '<div class="attach-list">' + attaches.map(function(a, ai) {
+      return '<div class="attach-item" data-ai="'+ai+'" title="클릭해서 다운로드">' +
+        '<span class="attach-icon">'+fileIcon(a.name)+'</span>' +
+        '<span class="attach-name">'+esc(a.name)+'</span>' +
+        '<span class="attach-size">'+fileSizeStr(a.size)+'</span>' +
+        '</div>'
+    }).join('') + '</div>'
+  }
+
+  // ── 푸터 ──
+  var footSrc = ''
+  if (urls.length && !imgs.length) {
+    var d2 = ''
+    try { d2 = new URL(urls[0]).hostname.replace(/^www\./, '') } catch(e) { d2 = urls[0] || '' }
+    footSrc = '<span class="foot-source">'+esc(d2)+(urls.length > 1 ? ' +' + (urls.length - 1) : '')+'</span>'
+  } else if (imgs.length) {
+    footSrc = '<span class="foot-source">'+imgs.length+'장</span>'
+  }
+  var extraBtns = ''
+  if (urls.length) extraBtns += '<button class="icon-btn btn-open" title="첫 링크 열기">↗</button>'
+  if (card.code) extraBtns += '<button class="icon-btn btn-copy" title="코드 복사">⎘</button>'
+  if (imgs.length) extraBtns += '<button class="icon-btn btn-dl" title="다운로드">↓</button>'
+
+  var toggleBar = '<div class="card-toggle-bar btn-collapse" style="display:none"><span class="collapse-arrow">▾</span><span class="collapse-label">더 보기</span></div>'
+
+  el.innerHTML = top + '<div class="card-inner-body">' + body + tagsRow + '</div>' +
+    '<div class="card-foot"><div class="foot-left">'+footSrc+'<div class="foot-colls">'+collSpans+'</div></div>' +
+    '<div class="foot-right"><span class="foot-date">'+fmtDate(card.createdAt)+'</span>'+extraBtns+'</div></div>' +
+    toggleBar
+
+  // ── 이벤트 ──
+  el.querySelector('.btn-del').addEventListener('click', function(e){ e.stopPropagation(); deleteCard(card.id) })
+  el.querySelector('.btn-pin').addEventListener('click', function(e){ e.stopPropagation(); togglePin(card.id) })
+  el.querySelector('.btn-edit').addEventListener('click', function(e){ e.stopPropagation(); openEditModal(card.id) })
+  el.querySelector('.card-select-btn').addEventListener('click', function(e){ e.stopPropagation(); toggleSelect(card.id) })
+  el.querySelectorAll('.tag[data-tag]').forEach(function(chip) {
+    chip.addEventListener('click', function(e){ e.stopPropagation(); setTagFilter(chip.dataset.tag) })
+  })
+  el.querySelectorAll('.img-grid-item').forEach(function(item) {
+    item.addEventListener('click', function(e) { e.stopPropagation(); openLightbox(imgs, parseInt(item.dataset.idx)) })
+  })
+  el.querySelectorAll('.lp-click').forEach(function(lp) {
+    lp.addEventListener('click', function(e){ e.stopPropagation(); window.open(lp.dataset.url, '_blank') })
+  })
+  el.querySelectorAll('.attach-item').forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      e.stopPropagation()
+      var ai = parseInt(item.dataset.ai)
+      var a = (card.attachments || [])[ai]
+      if (!a) return
+      var link = document.createElement('a')
+      link.href = a.data; link.download = a.name; link.click()
+    })
+  })
+  if (el.querySelector('.btn-open')) {
+    el.querySelector('.btn-open').addEventListener('click', function(e){ e.stopPropagation(); window.open(urls[0], '_blank') })
+  }
+  if (el.querySelector('.btn-copy')) {
+    el.querySelector('.btn-copy').addEventListener('click', function(e){
+      e.stopPropagation()
+      if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        prompt('코드를 복사하세요', card.code || '')
+        return
+      }
+      navigator.clipboard.writeText(card.code||'').then(function(){
+        var b = el.querySelector('.btn-copy')
+        b.textContent = '✓'; b.classList.add('copied')
+        setTimeout(function(){ b.textContent = '⎘'; b.classList.remove('copied') }, 1500)
+      }).catch(function(){
+        prompt('코드를 복사하세요', card.code || '')
+      })
+    })
+  }
+  if (el.querySelector('.btn-dl')) {
+    el.querySelector('.btn-dl').addEventListener('click', function(e){
+      e.stopPropagation()
+      imgs.forEach(function(src, i) {
+        var a = document.createElement('a'); a.href = src; a.download = fnames[i]||('image'+i); a.click()
+      })
+    })
+  }
+  el.querySelector('.btn-collapse').addEventListener('click', function(e){
+    e.stopPropagation()
+    var isCollapsed = el.classList.toggle('collapsed')
+    el.querySelector('.collapse-arrow').textContent = isCollapsed ? '▾' : '▴'
+    el.querySelector('.collapse-label').textContent = isCollapsed ? '더 보기' : '접기'
+  })
+
+  // 카드 클릭 → 상세 모달
+  el.style.cursor = 'pointer'
+  el.addEventListener('click', function(e) {
+    if (e.target.closest('button,a,.tag,.img-grid-item')) return
+    if (ST.selectionMode) { toggleSelect(card.id); return }
+    openDetailModal(card.id)
+  })
+
+  // 300px 초과 카드만 토글바 표시 (DOM에 붙은 뒤 확인)
+  requestAnimationFrame(function() {
+    var inner = el.querySelector('.card-inner-body')
+    var bar = el.querySelector('.card-toggle-bar')
+    if (inner && bar && inner.scrollHeight > 300) {
+      bar.style.display = 'flex'
+      el.classList.add('collapsed')
+    }
+  })
+
+  return el
+}
+
+// ── Pretext 기반 카드 높이 추정 ───────────────────────────
+// chenglou/pretext 라이브러리 활용:
+//   prepare(text, font) → canvas로 단어 폭 측정 (DOM 없이)
+//   layout(prepared, maxWidth, lineHeight) → 순수 연산으로 줄바꿈·높이 계산
+// 이를 masonry 열 배치 전에 호출해 DOM reflow 없이 높이를 예측
+var _ptFont14 = '700 14px Inter,sans-serif'
+var _ptFont13 = '400 13.5px Inter,sans-serif'
+var _ptFont12 = '400 12px Inter,sans-serif'
+
+function ptTextHeight(text, font, lh, maxLines, textW) {
+  if (!text) return 0
+  if (typeof Pretext !== 'undefined' && Pretext.prepare) {
+    try {
+      var p = Pretext.prepare(text, font)
+      var r = Pretext.layout(p, textW, lh)
+      return Math.min(r.height, lh * maxLines)
+    } catch(e) {}
+  }
+  // Pretext 미사용 시 글자 수 기반 근사
+  return lh * Math.min(maxLines, Math.max(1, Math.ceil(text.length * 7.5 / textW)))
+}
+
+function ptCardHeight(card, cardW) {
+  var pad = 32 + 38 + 34  // vertical padding + card-top + card-foot
+  var lh14 = 20, lh13 = 21, lh12 = 20
+  var textW = cardW - 40
+
+  var tagsH = (card.tags && card.tags.length) ? 30 : 0
+
+  if (card.type === 'link') {
+    var h = pad + 72 + 10  // preview bar
+    h += ptTextHeight(card.title, _ptFont14, lh14, 3, textW)
+    if (card.description) h += ptTextHeight(card.description, _ptFont13, lh13, 2, textW) + 6
+    return h + tagsH
+  }
+  if (card.type === 'image') {
+    var n = card.dataUrls ? card.dataUrls.length : 1
+    var cols = n <= 1 ? 1 : n <= 2 ? 2 : 3
+    var gridH = Math.ceil(Math.min(n,4) / cols) * Math.floor(textW / cols)
+    return pad + gridH + 8 + lh14 + tagsH
+  }
+  if (card.type === 'code') {
+    var codeLines = (card.code || '').split('\n').length
+    var codeH = Math.min(codeLines, 16) * lh12 + 28
+    return pad + 28 + codeH + tagsH
+  }
+  // memo
+  var h = pad
+  h += ptTextHeight(card.title, _ptFont14, lh14, 3, textW)
+  h += ptTextHeight(card.content, _ptFont13, lh13, 8, textW) + 10
+  return h + tagsH
+}
+
+// ── 보드 렌더 ─────────────────────────────────────────────
+function renderBoard() {
+  var visible = getVisible()
+  var board = document.getElementById('board')
+  var empty = document.getElementById('empty-state')
+
+  if (visible.length === 0) {
+    board.style.display = 'none'; empty.style.display = 'flex'; board.innerHTML = ''; renderSelectionUI(); return
+  }
+  empty.style.display = 'none'; board.style.display = 'block'
+
+  board.innerHTML = ''
+  visible.forEach(function(card) {
+    try {
+      board.appendChild(createCardEl(card))
+    } catch(e) {
+      console.error('Card render failed', card, e)
+      var fallback = document.createElement('div')
+      fallback.className = 'card memo'
+      fallback.innerHTML = '<div class="card-top"><span class="badge badge-memo">오류</span></div>' +
+        '<p class="card-title">'+esc(card.title || card.caption || card.id || '카드')+'</p>' +
+        '<p class="memo-content">이 카드 표시 중 문제가 생겼지만 다른 카드는 계속 표시됩니다.</p>'
+      board.appendChild(fallback)
+    }
+  })
+  renderSelectionUI()
+}
+
+// ── 사이드바 렌더 ─────────────────────────────────────────
+function renderSidebar() {
+  var my = ST.cards.filter(function(c){
+    return !ST.userId || !c.ownerId || c.ownerId === ST.userId
+  })
+  var accessibleColls = getAccessibleCollections()
+  var counts = { all: my.length, link:0, image:0, code:0, memo:0, file:0 }
+  my.forEach(function(c){
+    if (c.attachments && c.attachments.length > 0) counts.file++
+    TYPE_CAT_ENTRIES.forEach(function(entry) {
+      if (entry.typeVal === 'file') return
+      if (cardHasCategory(c, entry.id) && counts[entry.typeVal] !== undefined) counts[entry.typeVal]++
+    })
+  })
+
+  // type-filters 동적 렌더링
+  var tf = document.getElementById('type-filters')
+  var typeList = [{typeVal:'all', name:'전체', dotClass:'all'}].concat(
+    TYPE_CAT_ENTRIES.map(function(e){ return {typeVal:e.typeVal, name:e.name, dotClass:e.typeVal} })
+  )
+  tf.innerHTML = typeList.map(function(t){
+    var isActive = t.typeVal === ST.filterType && !ST.filterCatId
+    var cnt = counts[t.typeVal] !== undefined ? counts[t.typeVal] : 0
+    return '<button class="filter-btn'+(isActive?' active':'')+'" data-type="'+t.typeVal+'">' +
+      '<span class="dot '+t.dotClass+'"></span>'+t.name+
+      '<span class="filter-count" id="cnt-'+t.typeVal+'">'+cnt+'</span></button>'
+  }).join('')
+  tf.querySelectorAll('.filter-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ setTypeFilter(btn.dataset.type) })
+  })
+
+  // 커스텀 카테고리
+  var cats = document.getElementById('custom-cats')
+  var catCounts = {}
+  my.forEach(function(card) {
+    getCardCategoryIds(card).forEach(function(cid){ catCounts[cid] = (catCounts[cid] || 0) + 1 })
+  })
+  cats.innerHTML = ST.categories.map(function(cat, idx) {
+    var c = cat.color || CAT_COLORS[idx % CAT_COLORS.length]
+    return '<div class="custom-cat-btn'+(cat.id===ST.filterCatId?' active':'')+'" data-cat="'+esc(cat.id)+'">' +
+      '<span class="dot" style="background:'+c+';flex-shrink:0"></span><span class="custom-cat-name">'+esc(cat.name)+'</span>' +
+      '<span class="filter-count">'+(catCounts[cat.id] || 0)+'</span>' +
+      '<button class="cat-delete-btn" data-cat="'+esc(cat.id)+'">✕</button></div>'
+  }).join('')
+  cats.querySelectorAll('.custom-cat-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      if (e.target.classList.contains('cat-delete-btn')) return
+      setCatFilter(btn.dataset.cat)
+    })
+  })
+  cats.querySelectorAll('.cat-delete-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) { e.stopPropagation(); deleteCategory(btn.dataset.cat) })
+  })
+
+  // 태그
+  var tagMap = {}
+  my.forEach(function(c){ (c.tags||[]).forEach(function(t){ tagMap[t] = (tagMap[t]||0)+1 }) })
+  var tags = Object.keys(tagMap).sort(function(a,b){ return tagMap[b]-tagMap[a] }).slice(0,15)
+  var tl = document.getElementById('tag-list')
+  var TAGS_VISIBLE = 3
+  if (tags.length) {
+    var expanded = tl.dataset.expanded === 'true'
+    var visible = expanded ? tags : tags.slice(0, TAGS_VISIBLE)
+    var html = visible.map(function(t) {
+      return '<div class="tag-row'+(t===ST.filterTag?' active':'')+'" data-tag="'+esc(t)+'">' +
+        '<button class="tag-btn-main" data-tag="'+esc(t)+'"># '+esc(t)+'<span class="tag-count">'+tagMap[t]+'</span></button>' +
+        '<button class="tag-del-btn" data-tag="'+esc(t)+'" title="태그 삭제">✕</button></div>'
+    }).join('')
+    if (tags.length > TAGS_VISIBLE) {
+      html += expanded
+        ? '<button class="tag-more-btn">접기 ▲</button>'
+        : '<button class="tag-more-btn">+' + (tags.length - TAGS_VISIBLE) + '개 더 보기 ▼</button>'
+    }
+    tl.innerHTML = html
+    tl.querySelectorAll('.tag-btn-main').forEach(function(btn) {
+      btn.addEventListener('click', function(){ setTagFilter(btn.dataset.tag) })
+    })
+    tl.querySelectorAll('.tag-del-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation()
+        deleteTagGlobal(btn.dataset.tag)
+      })
+    })
+    var tog = tl.querySelector('.tag-more-btn')
+    if (tog) tog.addEventListener('click', function() {
+      tl.dataset.expanded = expanded ? 'false' : 'true'
+      renderSidebar()
+    })
+  } else {
+    tl.innerHTML = '<span style="font-size:11px;color:var(--text-3);padding:4px 8px">태그가 없어요</span>'
+  }
+
+  // 컬렉션
+  var cl = document.getElementById('coll-list')
+  cl.innerHTML = accessibleColls.map(function(c) {
+    return '<div class="collection-item'+(c.id===ST.filterCollId?' active':'')+'" data-coll="'+esc(c.id)+'">' +
+      '<span>'+c.emoji+'</span><span>'+esc(c.name)+'</span>' +
+      '<span class="collection-count">'+(c.cardIds||[]).length+'</span>' +
+      '<button class="coll-delete-btn" data-coll="'+esc(c.id)+'">✕</button></div>'
+  }).join('')
+  cl.querySelectorAll('.collection-item').forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      if (e.target.classList.contains('coll-delete-btn')) return
+      setCollFilter(item.dataset.coll)
+    })
+  })
+  cl.querySelectorAll('.coll-delete-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) { e.stopPropagation(); openDelCollModal(btn.dataset.coll) })
+  })
+
+  // 통계
+  document.getElementById('stat-total').textContent = my.length
+  document.getElementById('stat-tags').textContent = Object.keys(tagMap).length
+  document.getElementById('stat-colls').textContent = accessibleColls.length
+
+  // 필터 초기화 버튼
+  var hasFilter = ST.filterType!=='all' || ST.filterTag || ST.filterCollId || ST.filterCatId || ST.searchQuery
+  document.getElementById('clear-filter').style.display = hasFilter ? 'block' : 'none'
+}
+
+// ── 필터 ──────────────────────────────────────────────────
+function setTypeFilter(t) { ST.filterType = t; ST.filterCatId = ''; renderSidebar(); renderBoard() }
+function setTagFilter(t) { ST.filterTag = ST.filterTag === t ? '' : t; renderSidebar(); renderBoard() }
+function setCollFilter(id) { ST.filterCollId = ST.filterCollId === id ? '' : id; renderSidebar(); renderBoard() }
+function setCatFilter(id) { ST.filterCatId = ST.filterCatId === id ? '' : id; ST.filterType = 'all'; renderSidebar(); renderBoard() }
+function clearFilters() {
+  ST.filterType = 'all'; ST.filterTag = ''; ST.filterCollId = ''; ST.filterCatId = ''; ST.searchQuery = ''
+  document.getElementById('search-input').value = ''
+  renderSidebar(); renderBoard()
+}
+
+// ── 카드 조작 ─────────────────────────────────────────────
+function deleteCard(id) {
+  ST.deletingCardId = id
+  var card = ST.cards.find(function(c){ return c.id === id })
+  var title = card ? (card.title || '이 카드') : '이 카드'
+  document.getElementById('del-card-msg').textContent = '"' + title + '"을(를) 삭제할까요?'
+  document.getElementById('del-card-overlay').classList.add('open')
+}
+function confirmDeleteCard() {
+  var id = ST.deletingCardId; if (!id) return
+  ST.cards = ST.cards.filter(function(c){ return c.id !== id })
+  ST.selectedIds = ST.selectedIds.filter(function(i){ return i !== id })
+  ST.collections = ST.collections.map(function(c){
+    return Object.assign({}, c, { cardIds: (c.cardIds||[]).filter(function(i){ return i !== id }) })
+  })
+  save(); renderSidebar(); renderBoard(); showToast('카드를 삭제했어요')
+  document.getElementById('del-card-overlay').classList.remove('open'); ST.deletingCardId = null
+}
+
+function toggleSelect(id) {
+  if (!ST.selectionMode) ST.selectionMode = true
+  var i = ST.selectedIds.indexOf(id)
+  if (i >= 0) ST.selectedIds.splice(i, 1)
+  else ST.selectedIds.push(id)
+  renderBoard()
+  showToast(ST.selectedIds.length ? ST.selectedIds.length + '개 선택됨' : '선택 해제됨')
+}
+
+function toggleSelectionMode() {
+  ST.selectionMode = !ST.selectionMode
+  if (!ST.selectionMode) ST.selectedIds = []
+  renderBoard()
+  showToast(ST.selectionMode ? '선택 모드' : '선택 모드 해제')
+}
+
+function clearSelection() {
+  ST.selectedIds = []
+  ST.selectionMode = false
+  renderBoard()
+  showToast('선택 해제됨')
+}
+
+function toggleSelectVisible() {
+  ST.selectionMode = true
+  var visibleIds = getVisible().map(function(c){ return c.id })
+  if (!visibleIds.length) return
+  var allSelected = visibleIds.every(function(id){ return ST.selectedIds.indexOf(id) >= 0 })
+  if (allSelected) {
+    ST.selectedIds = ST.selectedIds.filter(function(id){ return visibleIds.indexOf(id) < 0 })
+  } else {
+    visibleIds.forEach(function(id){ if (ST.selectedIds.indexOf(id) < 0) ST.selectedIds.push(id) })
+  }
+  renderBoard()
+  showToast(allSelected ? '보이는 카드 선택 해제' : visibleIds.length + '개 선택됨')
+}
+
+function deleteSelectedOrVisible() {
+  var ids = ST.selectedIds.length ? ST.selectedIds.slice() : getVisible().map(function(c){ return c.id })
+  if (!ids.length) { showToast('삭제할 카드가 없어요'); return }
+  var msg = ST.selectedIds.length ? ids.length + '개 선택 카드를 삭제할까요?' : '현재 보이는 카드 ' + ids.length + '개를 모두 삭제할까요?'
+  if (!confirm(msg)) return
+  ST.cards = ST.cards.filter(function(c){ return ids.indexOf(c.id) < 0 })
+  ST.collections = ST.collections.map(function(c){
+    return Object.assign({}, c, { cardIds: (c.cardIds || []).filter(function(id){ return ids.indexOf(id) < 0 }) })
+  })
+  ST.selectedIds = []
+  ST.selectionMode = false
+  save(); renderSidebar(); renderBoard(); showToast(ids.length + '개 삭제했어요')
+}
+
+function renderSelectionUI() {
+  var bar = document.getElementById('select-bar')
+  var count = document.getElementById('select-count')
+  var selectBtn = document.getElementById('select-all-btn')
+  var modeBtn = document.getElementById('select-mode-btn')
+  var exportBtn = document.getElementById('export-btn')
+  if (!bar || !count) return
+  var n = ST.selectedIds.length
+  var visibleIds = getVisible().map(function(c){ return c.id })
+  var allVisibleSelected = visibleIds.length > 0 && visibleIds.every(function(id){ return ST.selectedIds.indexOf(id) >= 0 })
+  document.querySelectorAll('.selection-tool').forEach(function(el){ el.classList.toggle('show', ST.selectionMode) })
+  bar.classList.toggle('show', ST.selectionMode)
+  count.textContent = n + '개 선택'
+  if (selectBtn) selectBtn.classList.toggle('active', allVisibleSelected)
+  if (modeBtn) modeBtn.classList.toggle('active', ST.selectionMode)
+  if (exportBtn) exportBtn.title = n ? '선택 카드 내보내기' : '보이는 카드 내보내기'
+}
+
+function togglePin(id) {
+  var c = ST.cards.find(function(c){ return c.id === id })
+  if (!c) return
+  c.pinned = !c.pinned
+  save(); renderBoard(); showToast(c.pinned ? '📌 고정됐어요' : '고정 해제됐어요')
+}
+
+// ── 새 카드 모달 ──────────────────────────────────────────
+function openAddModal() {
+  if (!requireLogin()) return
+  ST.addTags = []
+  ST.addTypes = []
+  document.getElementById('add-title').value = ''
+  document.getElementById('add-content').value = ''
+  document.getElementById('add-url').value = ''
+  document.getElementById('add-desc').value = ''
+  document.getElementById('add-lang').value = ''
+  document.getElementById('add-code').value = ''
+  document.getElementById('add-caption').value = ''
+  document.getElementById('add-image-input').value = ''
+  document.getElementById('add-attach-input').value = ''
+  document.getElementById('add-file-label').textContent = '이미지 선택'
+  document.getElementById('add-attach-label').textContent = '파일 선택'
+  document.getElementById('add-image-preview').innerHTML = ''
+  document.getElementById('add-attach-preview').innerHTML = ''
+  renderAddTags()
+  renderAddCatOptions()
+  renderAddCollOptions()
+  document.getElementById('add-overlay').classList.add('open')
+  setTimeout(function(){ document.getElementById('add-title').focus() }, 60)
+}
+
+function closeAddModal() { document.getElementById('add-overlay').classList.remove('open') }
+
+function renderAddTags() {
+  var wrap = document.getElementById('add-tags-wrap')
+  wrap.querySelectorAll('.tag').forEach(function(el){ el.remove() })
+  var inp = document.getElementById('add-tag-input')
+  ST.addTags.forEach(function(t) {
+    var chip = document.createElement('span')
+    var c = tagColor(t)
+    chip.className = 'tag'
+    chip.style.cssText = 'background:'+c+'22;color:'+c+';border:1px solid '+c+'55;font-weight:800'
+    chip.innerHTML = '#'+esc(t) + '<button class="tag-remove" data-tag="'+esc(t)+'">✕</button>'
+    wrap.insertBefore(chip, inp)
+  })
+  wrap.querySelectorAll('.tag-remove').forEach(function(btn) {
+    btn.addEventListener('click', function(){
+      ST.addTags = ST.addTags.filter(function(t){ return t !== btn.dataset.tag })
+      renderAddTags()
+    })
+  })
+}
+
+var TYPE_CAT_ENTRIES = [
+  {id:'__type_link',  name:'링크',  color:'#60a5fa', typeVal:'link'},
+  {id:'__type_image', name:'이미지', color:'#4ade80', typeVal:'image'},
+  {id:'__type_code',  name:'코드',  color:'#fb923c', typeVal:'code'},
+  {id:'__type_memo',  name:'메모',  color:'#c084fc', typeVal:'memo'},
+  {id:'__type_file',  name:'파일',  color:'#f59e0b', typeVal:'file'}
+]
+
+function renderAddCatOptions() {
+  var wrap = document.getElementById('add-cat-options')
+  var userCats = ST.categories.map(function(c, i) {
+    return {id: c.id, name: c.name, color: c.color || CAT_COLORS[i % CAT_COLORS.length], typeVal: null}
+  })
+  var allOpts = TYPE_CAT_ENTRIES.concat(userCats)
+  wrap.innerHTML = allOpts.map(function(c) {
+    return '<div class="coll-option" data-cat="'+esc(c.id)+'" data-col="'+esc(c.color)+'"'+(c.typeVal?' data-typeval="'+esc(c.typeVal)+'"':'')+'>'+
+      '<span class="dot" style="background:'+c.color+'"></span> '+esc(c.name)+'</div>'
+  }).join('')
+  wrap.querySelectorAll('.coll-option').forEach(function(opt) {
+    opt.addEventListener('click', function(){
+      var col = opt.dataset.col || '#60a5fa'
+      opt.classList.toggle('checked')
+      if (opt.classList.contains('checked')) {
+        opt.style.cssText = 'background:'+col+'22;color:'+col+';border:1px solid '+col+'66;font-weight:700'
+      } else { opt.style.cssText = '' }
+    })
+  })
+}
+
+function renderAddCollOptions() {
+  var wrap = document.getElementById('add-coll-options')
+  var colls = getAccessibleCollections()
+  wrap.innerHTML = colls.length
+    ? colls.map(function(c) {
+        return '<div class="coll-option" data-coll="'+esc(c.id)+'">'+c.emoji+' '+esc(c.name)+'</div>'
+      }).join('')
+    : '<span class="coll-empty">컬렉션 없음</span>'
+  wrap.querySelectorAll('.coll-option').forEach(function(opt) {
+    opt.addEventListener('click', function(){ opt.classList.toggle('checked') })
+  })
+}
+
+function detectType(content) {
+  if (/https?:\/\/\S+/i.test(content)) return 'link'
+  if (/^(function|const|let|var|class|import|export|def |#include|<\?php|<!DOCTYPE)/m.test(content)) return 'code'
+  if (content.indexOf('\n') > -1 && content.length > 100) return 'code'
+  return 'memo'
+}
+
+// ── 편집 모달 ─────────────────────────────────────────────
+
+function renderEditTags() {
+  var wrap = document.getElementById('edit-tags-wrap')
+  wrap.querySelectorAll('.tag').forEach(function(el){ el.remove() })
+  var inp = document.getElementById('edit-tag-input')
+  ST.editTags.forEach(function(t) {
+    var chip = document.createElement('span')
+    var c = tagColor(t)
+    chip.className = 'tag'
+    chip.style.cssText = 'background:'+c+'22;color:'+c+';border:1px solid '+c+'55;font-weight:800'
+    chip.innerHTML = '#'+esc(t) + '<button class="tag-remove" data-tag="'+esc(t)+'">✕</button>'
+    wrap.insertBefore(chip, inp)
+  })
+  wrap.querySelectorAll('.tag-remove').forEach(function(btn) {
+    btn.addEventListener('click', function(){
+      ST.editTags = ST.editTags.filter(function(t){ return t !== btn.dataset.tag })
+      renderEditTags()
+    })
+  })
+}
+
+
+// ── 컬렉션 ───────────────────────────────────────────────
+function readImageFiles(files, done) {
+  files = Array.from(files || [])
+  if (!files.length) { done([], []); return }
+  var dataUrls = [], filenames = [], loaded = 0
+  files.forEach(function(file, i) {
+    var reader = new FileReader()
+    reader.onload = function(e) {
+      dataUrls[i] = e.target.result
+      filenames[i] = file.name
+      loaded++
+      if (loaded === files.length) done(dataUrls, filenames)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+// 파일 아이콘
+function fileIcon(name) {
+  var ext = (name||'').split('.').pop().toLowerCase()
+  if (ext==='pdf') return '📄'
+  if (['zip','rar','7z','tar','gz'].indexOf(ext)>=0) return '🗜'
+  if (['doc','docx'].indexOf(ext)>=0) return '📝'
+  if (['xls','xlsx','csv'].indexOf(ext)>=0) return '📊'
+  if (['ppt','pptx'].indexOf(ext)>=0) return '📋'
+  if (['mp3','wav','ogg','flac'].indexOf(ext)>=0) return '🎵'
+  if (['mp4','mov','avi','mkv'].indexOf(ext)>=0) return '🎬'
+  if (['js','ts','py','java','c','cpp','go','rs'].indexOf(ext)>=0) return '💻'
+  return '📁'
+}
+
+function fileSizeStr(bytes) {
+  if (bytes < 1024) return bytes + 'B'
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + 'KB'
+  return (bytes/1048576).toFixed(1) + 'MB'
+}
+
+function renderAttachPreview(targetId, files, existing) {
+  var target = document.getElementById(targetId)
+  if (!target) return
+  var MAX = 10 * 1024 * 1024
+  files = Array.from(files || [])
+  existing = Array.from(existing || [])
+  target.innerHTML = ''
+
+  function addItem(file, state, className) {
+    var name = file.name || '파일'
+    var size = fileSizeStr(file.size || 0)
+    var card = document.createElement('div')
+    card.className = 'attach-preview-card ' + (className || '')
+    card.title = name
+    card.innerHTML =
+      '<span class="attach-preview-icon">'+fileIcon(name)+'</span>' +
+      '<span class="attach-preview-main">' +
+        '<span class="attach-preview-name">'+esc(name)+'</span>' +
+        '<span class="attach-preview-meta">'+size+'</span>' +
+      '</span>' +
+      '<span class="attach-preview-state">'+state+'</span>'
+    target.appendChild(card)
+  }
+
+  existing.forEach(function(file){ addItem(file, '저장됨', 'saved') })
+  files.forEach(function(file){
+    if (file.size > MAX) addItem(file, '10MB 초과', 'blocked')
+    else addItem(file, '새 첨부', 'new')
+  })
+}
+
+function setAttachLabel(labelId, count, savedCount) {
+  var label = document.getElementById(labelId)
+  if (!label) return
+  if (count) label.textContent = count + '개 선택됨'
+  else if (savedCount) label.textContent = '현재 ' + savedCount + '개, 새 파일 선택 가능'
+  else label.textContent = '파일 선택'
+}
+
+// 첨부 파일 읽기 (base64, 10MB 제한)
+function readAttachFiles(files, done) {
+  files = Array.from(files || [])
+  if (!files.length) { done([]); return }
+  var results = [], loaded = 0
+  var MAX = 10 * 1024 * 1024
+  files.forEach(function(file, i) {
+    if (file.size > MAX) {
+      showToast('"'+file.name+'"은 10MB를 초과해서 첨부할 수 없어요')
+      results[i] = null; loaded++
+      if (loaded === files.length) done(results.filter(Boolean))
+      return
+    }
+    var reader = new FileReader()
+    reader.onload = function(e) {
+      results[i] = { name: file.name, size: file.size, data: e.target.result, type: file.type }
+      loaded++
+      if (loaded === files.length) done(results.filter(Boolean))
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function cardPrimaryType(parts) {
+  var kinds = parts.kinds || parts.types || []
+  if (!kinds.length && parts.categoryIds) {
+    parts.categoryIds.forEach(function(cid) {
+      var entry = TYPE_CAT_ENTRIES.find(function(c){ return c.id === cid })
+      if (entry && kinds.indexOf(entry.typeVal) < 0) kinds.push(entry.typeVal)
+    })
+  }
+  if (kinds.indexOf('image') >= 0) return 'image'
+  if (kinds.indexOf('link') >= 0) return 'link'
+  if (kinds.indexOf('code') >= 0) return 'code'
+  if (kinds.indexOf('memo') >= 0) return 'memo'
+  if (parts.dataUrls && parts.dataUrls.length) return 'image'
+  if (getCardUrls(parts).length) return 'link'
+  if (parts.code) return 'code'
+  return 'memo'
+}
+
+function saveAddModal() {
+  var title = document.getElementById('add-title').value.trim()
+  var content = document.getElementById('add-content').value.trim()
+  var urlText = document.getElementById('add-url').value.trim()
+  var descText = document.getElementById('add-desc').value.trim()
+  var codeText = document.getElementById('add-code').value
+  var langText = document.getElementById('add-lang').value.trim()
+  var captionText = document.getElementById('add-caption').value.trim()
+  var allFiles = Array.from(document.getElementById('add-image-input').files || [])
+  var removedIdxs = []
+  document.querySelectorAll('#add-image-preview .preview-thumb[data-removed="true"]').forEach(function(el) {
+    removedIdxs.push(parseInt(el.querySelector('.preview-del').dataset.idx))
+  })
+  var imageFiles = allFiles.filter(function(_, i){ return removedIdxs.indexOf(i) < 0 })
+  var attachFiles = Array.from(document.getElementById('add-attach-input').files || [])
+  var selectedCats = []
+  document.querySelectorAll('#add-cat-options .coll-option.checked').forEach(function(o){ selectedCats.push(o.dataset.cat) })
+  var selectedColls = []
+  document.querySelectorAll('#add-coll-options .coll-option.checked').forEach(function(o){
+    selectedColls.push(o.dataset.coll)
+  })
+  var selectedTypes = []
+  selectedCats.forEach(function(cid) {
+    var entry = TYPE_CAT_ENTRIES.find(function(c){ return c.id === cid })
+    if (entry && selectedTypes.indexOf(entry.typeVal) < 0) selectedTypes.push(entry.typeVal)
+  })
+  if (!title && !content && !urlText && !descText && !codeText.trim() && imageFiles.length === 0 && attachFiles.length === 0) { showToast('제목, 본문, URL, 코드, 이미지, 파일 중 하나는 넣어주세요'); return }
+
+  var links = parseLinkLines(urlText)
+  var urls = links.map(function(l){ return l.url })
+  extractUrls(content).forEach(function(u) {
+    if (urls.indexOf(u) < 0 && urls.length < 5) {
+      urls.push(u)
+      links.push({ url: u, label: linkLabelFromUrl(u) })
+    }
+  })
+  var textWithoutUrl = content
+  urls.forEach(function(u){ textWithoutUrl = textWithoutUrl.replace(u, '') })
+  textWithoutUrl = textWithoutUrl.trim()
+  var wantsCode = selectedTypes.indexOf('code') >= 0
+  var wantsMemo = selectedTypes.indexOf('memo') >= 0
+  var isCode = !!codeText.trim() || (textWithoutUrl && (wantsCode || detectType(textWithoutUrl) === 'code'))
+  var domain = ''
+  if (urls.length) {
+    try { domain = new URL(urls[0]).hostname.replace(/^www\./, '') } catch(e) { domain = urls[0] }
+  }
+
+  readImageFiles(imageFiles, function(dataUrls, filenames) {
+    readAttachFiles(attachFiles, function(attachData) {
+      var card = {
+        id: uuid(),
+        type: 'memo',
+        title: title || domain || (textWithoutUrl ? textWithoutUrl.split('\n')[0].slice(0,40) : '') || filenames[0] || (attachData.length ? attachData[0].name : '') || '메모',
+        url: urls[0] || '',
+        urls: urls,
+        links: links,
+        description: descText || (urls.length && !isCode ? textWithoutUrl : ''),
+        content: (wantsMemo || (!urls.length && !isCode) || codeText.trim()) ? textWithoutUrl : '',
+        code: codeText || (isCode ? textWithoutUrl : ''),
+        language: (codeText || isCode) ? (langText || 'plaintext') : '',
+        dataUrls: dataUrls,
+        filenames: filenames,
+        caption: dataUrls.length ? (captionText || title || filenames[0]) : captionText,
+        attachments: attachData,
+        kinds: selectedTypes,
+        tags: ST.addTags.slice(),
+        categoryIds: selectedCats.slice(),
+        collectionIds: selectedColls.slice(),
+        createdAt: Date.now(),
+        ownerId: ST.userId,
+        authorName: ST.userName
+      }
+      card.type = cardPrimaryType(card)
+      selectedColls.forEach(function(cid) {
+        var c = ST.collections.find(function(c){ return c.id === cid })
+        if (c) { c.cardIds = c.cardIds || []; c.cardIds.push(card.id) }
+      })
+      ST.cards.unshift(card)
+      save(); closeAddModal(); renderSidebar(); renderBoard(); showToast('새 카드가 추가되었어요')
+    })
+  })
+}
+
+function setEditFieldOrder(id, order) {
+  var el = document.getElementById(id)
+  if (el) el.style.order = order
+}
+
+function setEditModalLayout(card) {
+  var modal = document.querySelector('#edit-overlay .edit-modal-wide')
+  if (modal) modal.classList.remove('memo-mode')
+  setEditFieldOrder('edit-main-section', 0)
+  setEditFieldOrder('edit-title-wrap', 2)
+  setEditFieldOrder('edit-tags-field', 3)
+  setEditFieldOrder('edit-content-wrap', 4)
+  setEditFieldOrder('edit-extra-section', 5)
+  setEditFieldOrder('edit-url-wrap', 6)
+  setEditFieldOrder('edit-desc-wrap', 7)
+  setEditFieldOrder('edit-code-wrap', 8)
+  setEditFieldOrder('edit-caption-wrap', 9)
+  setEditFieldOrder('edit-image-wrap', 10)
+  setEditFieldOrder('edit-attach-wrap', 11)
+  setEditFieldOrder('edit-cats-field', 12)
+  setEditFieldOrder('edit-colls-field', 13)
+
+  document.getElementById('edit-content-label').textContent = '본문'
+  document.getElementById('edit-content-hint').textContent = '메모로 보여줄 내용입니다. 링크나 코드는 아래 전용 칸에 넣으면 더 깔끔하게 저장됩니다.'
+  document.getElementById('edit-desc-label').textContent = '링크 설명'
+  document.getElementById('edit-desc-hint').textContent = '링크 카드의 미리보기 설명이나 짧은 부제목입니다.'
+  document.getElementById('edit-desc-wrap').style.display = ''
+}
+
+function openEditModal(id) {
+  var card = ST.cards.find(function(c){ return c.id === id })
+  if (!card) return
+  ST.editingId = id
+  ST.editTags = (card.tags || []).slice()
+  document.getElementById('edit-type-badge').textContent = '카드 수정'
+  setEditModalLayout(card)
+  document.getElementById('edit-title').value = card.title || ''
+  document.getElementById('edit-url').value = linksText(card)
+  document.getElementById('edit-desc').value = card.description || ''
+  document.getElementById('edit-content').value = card.content || ''
+  document.getElementById('edit-lang').value = card.language || ''
+  document.getElementById('edit-code').value = card.code || ''
+  document.getElementById('edit-caption').value = card.caption || ''
+  document.getElementById('edit-image-input').value = ''
+  document.getElementById('edit-attach-input').value = ''
+  setAttachLabel('edit-attach-label', 0, (card.attachments || []).length)
+  renderAttachPreview('edit-attach-preview', [], card.attachments || [])
+  renderEditImagePreview(card)
+  renderEditTags()
+  renderEditCatOptions(card)
+  renderEditCollOptions(card)
+  document.getElementById('edit-overlay').classList.add('open')
+}
+
+function renderEditCatOptions(card) {
+  var wrap = document.getElementById('edit-cat-options')
+  var currentIds = card.categoryIds || []
+  ;(card.kinds && card.kinds.length ? card.kinds : [card.type || 'memo']).forEach(function(k) {
+    var typeCat = TYPE_CAT_ENTRIES.find(function(c){ return c.typeVal === k })
+    if (typeCat && currentIds.indexOf(typeCat.id) < 0) currentIds.push(typeCat.id)
+  })
+  var userCats = ST.categories.map(function(c, i) {
+    return {id: c.id, name: c.name, color: c.color || CAT_COLORS[i % CAT_COLORS.length], typeVal: null}
+  })
+  var allOpts = TYPE_CAT_ENTRIES.concat(userCats)
+  wrap.innerHTML = allOpts.map(function(c) {
+    var isChecked = currentIds.indexOf(c.id) >= 0
+    var style = isChecked ? 'background:'+c.color+'22;color:'+c.color+';border:1px solid '+c.color+'66;font-weight:700' : ''
+    return '<div class="coll-option'+(isChecked?' checked':'')+'" data-cat="'+esc(c.id)+'" data-col="'+esc(c.color)+'"'+
+      (c.typeVal?' data-typeval="'+esc(c.typeVal)+'"':'')+' style="'+style+'">'+
+      '<span class="dot" style="background:'+c.color+'"></span> '+esc(c.name)+'</div>'
+  }).join('')
+  wrap.querySelectorAll('.coll-option').forEach(function(opt) {
+    opt.addEventListener('click', function(){
+      var col = opt.dataset.col || '#60a5fa'
+      opt.classList.toggle('checked')
+      if (opt.classList.contains('checked')) {
+        opt.style.cssText = 'background:'+col+'22;color:'+col+';border:1px solid '+col+'66;font-weight:700'
+      } else { opt.style.cssText = '' }
+    })
+  })
+}
+
+function renderEditCollOptions(card) {
+  var wrap = document.getElementById('edit-coll-options')
+  var colls = getAccessibleCollections()
+  var currentIds = card.collectionIds || []
+  wrap.innerHTML = colls.length
+    ? colls.map(function(c) {
+        var checked = currentIds.indexOf(c.id) >= 0 ? ' checked' : ''
+        return '<div class="coll-option'+checked+'" data-coll="'+esc(c.id)+'">'+c.emoji+' '+esc(c.name)+'</div>'
+      }).join('')
+    : '<span class="coll-empty">컬렉션 없음</span>'
+  wrap.querySelectorAll('.coll-option').forEach(function(opt) {
+    opt.addEventListener('click', function(){ opt.classList.toggle('checked') })
+  })
+}
+
+function saveEditModal() {
+  var card = ST.cards.find(function(c){ return c.id === ST.editingId })
+  if (!card) return
+  var imageFiles = Array.from(document.getElementById('edit-image-input').files || [])
+  function applyText() {
+    var links = parseLinkLines(document.getElementById('edit-url').value)
+    var urls = links.map(function(l){ return l.url })
+    var title = document.getElementById('edit-title').value.trim()
+    card.title = title || card.title || '메모'
+    card.url = urls[0] || ''
+    card.urls = urls
+    card.links = links
+    card.description = document.getElementById('edit-desc').value.trim()
+    card.content = document.getElementById('edit-content').value.trim()
+    card.language = document.getElementById('edit-lang').value.trim() || (card.code ? 'plaintext' : '')
+    card.code = document.getElementById('edit-code').value
+    card.caption = document.getElementById('edit-caption').value.trim()
+    card.tags = ST.editTags.slice()
+    // 카테고리 저장 (타입 포함 전부)
+    var newCatIds = []
+    document.querySelectorAll('#edit-cat-options .coll-option.checked').forEach(function(o){ newCatIds.push(o.dataset.cat) })
+    card.categoryIds = newCatIds
+    var selectedKinds = []
+    newCatIds.forEach(function(cid) {
+      var entry = TYPE_CAT_ENTRIES.find(function(c){ return c.id === cid })
+      if (entry && selectedKinds.indexOf(entry.typeVal) < 0) selectedKinds.push(entry.typeVal)
+    })
+    card.kinds = selectedKinds
+    // 타입은 선택 카테고리와 내용에서 자동 감지
+    card.type = cardPrimaryType(card)
+    // 컬렉션 저장
+    var newCollIds = []
+    document.querySelectorAll('#edit-coll-options .coll-option.checked').forEach(function(o){ newCollIds.push(o.dataset.coll) })
+    var oldCollIds = card.collectionIds || []
+    // 추가된 컬렉션에 카드 id 삽입
+    newCollIds.forEach(function(cid) {
+      if (oldCollIds.indexOf(cid) < 0) {
+        var c = ST.collections.find(function(c){ return c.id === cid })
+        if (c) { c.cardIds = c.cardIds || []; if (c.cardIds.indexOf(card.id) < 0) c.cardIds.push(card.id) }
+      }
+    })
+    // 제거된 컬렉션에서 카드 id 삭제
+    oldCollIds.forEach(function(cid) {
+      if (newCollIds.indexOf(cid) < 0) {
+        var c = ST.collections.find(function(c){ return c.id === cid })
+        if (c) { c.cardIds = (c.cardIds || []).filter(function(i){ return i !== card.id }) }
+      }
+    })
+    card.collectionIds = newCollIds
+    save()
+    document.getElementById('edit-overlay').classList.remove('open')
+    ST.editingId = null
+    renderSidebar(); renderBoard(); showToast('수정되었어요')
+  }
+  var editAttachFiles = Array.from(document.getElementById('edit-attach-input').files || [])
+  if (imageFiles.length) {
+    readImageFiles(imageFiles, function(dataUrls, filenames) {
+      card.dataUrls = dataUrls
+      card.filenames = filenames
+      if (editAttachFiles.length) {
+        readAttachFiles(editAttachFiles, function(attachData) {
+          card.attachments = (card.attachments || []).concat(attachData)
+          applyText()
+        })
+      } else { applyText() }
+    })
+  } else if (editAttachFiles.length) {
+    readAttachFiles(editAttachFiles, function(attachData) {
+      card.attachments = (card.attachments || []).concat(attachData)
+      applyText()
+    })
+  } else {
+    applyText()
+  }
+}
+
+function openNewCollModal() {
+  if (!requireLogin()) return
+  ST.collEmoji = '📁'; document.getElementById('coll-emoji').textContent = '📁'
+  document.getElementById('coll-name').value = ''
+  document.getElementById('coll-overlay').classList.add('open')
+  setTimeout(function(){ document.getElementById('coll-name').focus() }, 50)
+}
+
+function createCollection() {
+  var name = document.getElementById('coll-name').value.trim()
+  if (!name) return
+  ST.collections.push({ id:uuid(), name:name, emoji:ST.collEmoji, cardIds:[], ownerId:ST.userId })
+  save(); document.getElementById('coll-overlay').classList.remove('open')
+  renderSidebar(); showToast('"'+name+'" 컬렉션이 만들어졌어요')
+}
+
+
+function openDelCollModal(id) {
+  var c = ST.collections.find(function(c){ return c.id === id })
+  if (!c) return
+  ST.deletingCollId = id
+  document.getElementById('del-coll-msg').textContent = '"'+c.name+'" 컬렉션을 삭제하면 카드는 삭제되지 않아요.'
+  document.getElementById('del-coll-overlay').classList.add('open')
+}
+
+function confirmDelColl() {
+  ST.collections = ST.collections.filter(function(c){ return c.id !== ST.deletingCollId })
+  if (ST.filterCollId === ST.deletingCollId) ST.filterCollId = ''
+  save(); document.getElementById('del-coll-overlay').classList.remove('open'); ST.deletingCollId = null
+  renderSidebar(); renderBoard(); showToast('컬렉션이 삭제됐어요')
+}
+
+// ── 카테고리 ──────────────────────────────────────────────
+function openCatModal() {
+  if (!requireLogin()) return
+  ST.catEmoji = '🏷'; document.getElementById('cat-emoji').textContent = '🏷'
+  document.getElementById('cat-name').value = ''
+  document.getElementById('cat-overlay').classList.add('open')
+  setTimeout(function(){ document.getElementById('cat-name').focus() }, 50)
+}
+
+var CAT_COLORS = ['#60a5fa','#4ade80','#fb923c','#c084fc','#f87171','#34d399','#fbbf24','#a78bfa','#f472b6','#38bdf8']
+
+function createCategory() {
+  var name = document.getElementById('cat-name').value.trim()
+  if (!name) return
+  var color = CAT_COLORS[ST.categories.length % CAT_COLORS.length]
+  ST.categories.push({ id:uuid(), name:name, emoji:ST.catEmoji, color:color, ownerId:ST.userId })
+  save(); document.getElementById('cat-overlay').classList.remove('open')
+  renderSidebar(); showToast('"'+name+'" 카테고리가 추가됐어요')
+}
+
+// ── 태그 전체 삭제 ────────────────────────────────────────
+var _deletingTag = null
+function openDelTagModal(tag) {
+  _deletingTag = tag
+  document.getElementById('del-tag-msg').textContent = '"#'+tag+'" 태그를 모든 카드에서 삭제할까요?'
+  document.getElementById('del-tag-overlay').classList.add('open')
+}
+function confirmDelTag() {
+  var tag = _deletingTag; _deletingTag = null
+  document.getElementById('del-tag-overlay').classList.remove('open')
+  if (!tag) return
+  ST.cards = ST.cards.map(function(c) {
+    return Object.assign({}, c, { tags: (c.tags||[]).filter(function(t){ return t !== tag }) })
+  })
+  if (ST.filterTag === tag) ST.filterTag = ''
+  save(); renderSidebar(); renderBoard(); showToast('"#'+tag+'" 태그를 삭제했어요')
+}
+function deleteTagGlobal(tag) { openDelTagModal(tag) }
+
+// 현재 등록된 고유 태그 수
+function getUniqueTags() {
+  var set = {}
+  ST.cards.forEach(function(c){ (c.tags||[]).forEach(function(t){ set[t] = 1 }) })
+  return Object.keys(set)
+}
+
+var _deletingCatId = null
+function openDelCatModal(id) {
+  var c = ST.categories.find(function(c){ return c.id === id })
+  if (!c) return
+  _deletingCatId = id
+  document.getElementById('del-cat-msg').textContent = '"'+c.name+'" 카테고리를 삭제할까요?'
+  document.getElementById('del-cat-overlay').classList.add('open')
+}
+function confirmDelCat() {
+  ST.categories = ST.categories.filter(function(c){ return c.id !== _deletingCatId })
+  if (ST.filterCatId === _deletingCatId) ST.filterCatId = ''
+  _deletingCatId = null
+  save(); document.getElementById('del-cat-overlay').classList.remove('open')
+  renderSidebar(); renderBoard(); showToast('카테고리가 삭제됐어요')
+}
+function deleteCategory(id) { openDelCatModal(id) }
+
+// ── 내보내기 ──────────────────────────────────────────────
+function safeFileName(name) {
+  return String(name || 'stash').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 80) || 'stash'
+}
+
+function codeExt(lang) {
+  var map = { javascript:'js', typescript:'ts', python:'py', html:'html', css:'css', json:'json', markdown:'md', bash:'sh', shell:'sh', sql:'sql', plaintext:'txt', text:'txt' }
+  return map[String(lang || '').toLowerCase()] || 'txt'
+}
+
+function downloadBlob(name, blob) {
+  var a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = name
+  a.click()
+  setTimeout(function(){ URL.revokeObjectURL(a.href) }, 1000)
+}
+
+function downloadText(name, text, type) {
+  downloadBlob(name, new Blob([text || ''], {type:type || 'text/plain;charset=utf-8'}))
+}
+
+function dataUrlToBytes(dataUrl) {
+  var parts = String(dataUrl || '').split(',')
+  var meta = parts[0] || ''
+  var raw = atob(parts[1] || '')
+  var bytes = new Uint8Array(raw.length)
+  for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
+  var mime = (meta.match(/data:([^;]+)/) || [,'application/octet-stream'])[1]
+  return { bytes: bytes, mime: mime }
+}
+
+function imageExtFromDataUrl(src) {
+  var mime = ((String(src || '').match(/^data:([^;]+)/) || [,''])[1]).toLowerCase()
+  if (mime.indexOf('png') >= 0) return 'png'
+  if (mime.indexOf('webp') >= 0) return 'webp'
+  if (mime.indexOf('gif') >= 0) return 'gif'
+  return 'jpg'
+}
+
+function cardMarkdown(c) {
+  var lines = ['# ' + (c.title || c.caption || 'Card'), '']
+  getCardLinks(c).forEach(function(l, i){ lines.push('- URL ' + (i + 1) + ' ' + (l.label || linkLabelFromUrl(l.url)) + ': <' + l.url + '>') })
+  if (c.description) lines.push('', c.description)
+  if (c.content) lines.push('', c.content)
+  if (c.code) lines.push('', '```' + (c.language || ''), c.code, '```')
+  if (c.caption) lines.push('', 'Caption: ' + c.caption)
+  if (c.tags && c.tags.length) lines.push('', 'Tags: ' + c.tags.map(function(t){ return '#' + t }).join(' '))
+  return lines.join('\n')
+}
+
+function openDetailModal(id) {
+  var card = ST.cards.find(function(c){ return c.id === id })
+  if (!card) return
+  ST.detailId = id
+  var imgs = card.dataUrls && card.dataUrls.length ? card.dataUrls : (card.dataUrl ? [card.dataUrl] : [])
+  var links = getCardLinks(card)
+  var urls = links.map(function(l){ return l.url })
+  var body = ''
+  var title = card.title || '카드'
+  var heading = document.getElementById('detail-type-badge')
+  heading.textContent = title
+  heading.classList.add('detail-heading')
+  if (card.createdAt) body += '<div class="detail-time">' + esc(fmtDate(card.createdAt)) + '</div>'
+  var detCatIds = getCardCategoryIds(card)
+  var detCatsHtml = detCatIds.map(function(cid) {
+    var typeCat = TYPE_CAT_ENTRIES.find(function(c){ return c.id === cid })
+    if (typeCat) return '<span class="kind-chip '+esc(typeCat.typeVal)+'">'+esc(typeCat.name)+'</span>'
+    var cat = ST.categories.find(function(c){ return c.id === cid })
+    if (!cat) return ''
+    var catIdx = ST.categories.findIndex(function(c){ return c.id === cid })
+    var cc = cat.color || CAT_COLORS[catIdx >= 0 ? catIdx % CAT_COLORS.length : 0]
+    return '<span class="badge" style="background:'+cc+'20;color:'+cc+';border:1px solid '+cc+'55">'+esc(cat.name)+'</span>'
+  }).filter(Boolean).join('')
+  var detTagsHtml = (card.tags || []).map(function(t) {
+    return '<span class="tag" style="background:var(--surface);color:var(--text-2);border:1px solid var(--border);font-weight:800">#'+esc(t)+'</span>'
+  }).join('')
+  var detColls = getAccessibleCollections().filter(function(c){ return c.cardIds && c.cardIds.indexOf(card.id) >= 0 })
+  var detCollsHtml = detColls.map(function(c) {
+    return '<span class="foot-coll" title="'+esc(c.name)+'">'+c.emoji+' <span class="foot-coll-name">'+esc(c.name)+'</span></span>'
+  }).join('')
+  var metaRows = ''
+  if (detCatsHtml) metaRows += '<div class="detail-meta-row"><div class="detail-meta-label">카테고리</div><div class="detail-meta-value">'+detCatsHtml+'</div></div>'
+  if (detTagsHtml) metaRows += '<div class="detail-meta-row"><div class="detail-meta-label">태그</div><div class="detail-meta-value">'+detTagsHtml+'</div></div>'
+  if (detCollsHtml) metaRows += '<div class="detail-meta-row"><div class="detail-meta-label">컬렉션</div><div class="detail-meta-value">'+detCollsHtml+'</div></div>'
+  if (card.content) body += '<div class="detail-main-content">'+esc(card.content)+'</div>'
+  if (imgs.length) {
+    var gridClass = imgs.length===1?'n1':imgs.length===2?'n2':imgs.length===3?'n3':'n4plus'
+    body += '<div class="detail-img-grid '+gridClass+'">' + imgs.map(function(src, i) {
+      return '<div class="detail-img-item" data-idx="'+i+'"><img src="'+src+'" alt="" /></div>'
+    }).join('') + '</div>'
+    if (card.caption && card.caption !== title) body += '<div class="detail-section-title">사진 설명</div><div class="detail-desc">'+esc(card.caption)+'</div>'
+  } else if (card.caption) {
+    body += '<div class="detail-section-title">이미지 설명</div><div class="detail-desc">'+esc(card.caption)+'</div>'
+  }
+  if (urls.length) {
+    body += '<div class="detail-section-title">링크</div><div class="url-list">' + links.map(function(l) {
+      return '<a class="url-pill" href="'+esc(l.url)+'" target="_blank" rel="noreferrer">↗ <span>'+esc(l.label || linkLabelFromUrl(l.url))+'</span></a>'
+    }).join('') + '</div>'
+    if (card.description) body += '<div class="detail-section-title">URL 설명</div><div class="detail-desc">'+esc(card.description)+'</div>'
+  } else if (card.description) {
+    body += '<div class="detail-section-title">설명</div><div class="detail-desc">'+esc(card.description)+'</div>'
+  }
+  if (card.code) body += '<div class="detail-section-title">코드 ' + esc(card.language || 'text') + '</div><pre class="detail-code-block"><code>'+esc(card.code)+'</code></pre>'
+  if (card.attachments && card.attachments.length) {
+    body += '<div class="detail-section-title">첨부 파일</div><div class="attach-list">' +
+      card.attachments.map(function(a, ai) {
+        return '<div class="attach-item" data-ai="'+ai+'" title="클릭해서 다운로드">' +
+          '<span class="attach-icon">'+fileIcon(a.name)+'</span>' +
+          '<span class="attach-name">'+esc(a.name)+'</span>' +
+          '<span class="attach-size">'+fileSizeStr(a.size)+'</span>' +
+          '</div>'
+      }).join('') + '</div>'
+  }
+  if (metaRows) body += '<div class="detail-meta">' + metaRows + '</div>'
+  document.getElementById('detail-body').innerHTML = body
+  document.getElementById('detail-body').querySelectorAll('.detail-img-item').forEach(function(item) {
+    item.addEventListener('click', function(){ openLightbox(imgs, parseInt(item.dataset.idx)) })
+  })
+  document.getElementById('detail-body').querySelectorAll('.attach-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      var ai = parseInt(item.dataset.ai)
+      var a = (card.attachments || [])[ai]
+      if (!a) return
+      var link = document.createElement('a'); link.href = a.data; link.download = a.name; link.click()
+    })
+  })
+  var footer = '<button class="detail-save-btn" data-act="json">카드 저장</button>'
+  if (card.code) footer += '<button class="detail-save-btn" data-act="code">코드 저장</button>'
+  if (urls.length) footer += '<button class="detail-save-btn" data-act="link">링크 열기</button>'
+  if (imgs.length) footer += '<button class="detail-save-btn" data-act="images">이미지 저장</button>'
+  document.getElementById('detail-footer').innerHTML = footer
+  document.getElementById('detail-footer').querySelectorAll('[data-act]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var act = btn.dataset.act
+      if (act === 'json') downloadText(safeFileName(title)+'.json', JSON.stringify(card, null, 2), 'application/json;charset=utf-8')
+      if (act === 'code') downloadText(safeFileName(title)+'.'+codeExt(card.language), card.code, 'text/plain;charset=utf-8')
+      if (act === 'link') urls.forEach(function(u){ window.open(u, '_blank') })
+      if (act === 'images') imgs.forEach(function(src, i) {
+        var a = document.createElement('a'); a.href = src; a.download = (card.filenames && card.filenames[i]) || (safeFileName(title)+'-'+(i+1)+'.'+imageExtFromDataUrl(src)); a.click()
+      })
+    })
+  })
+  document.getElementById('detail-overlay').classList.add('open')
+}
+
+var _crcTable = null
+function crc32(bytes) {
+  if (!_crcTable) {
+    _crcTable = []
+    for (var n = 0; n < 256; n++) {
+      var c = n
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1)
+      _crcTable[n] = c >>> 0
+    }
+  }
+  var crc = 0 ^ -1
+  for (var i = 0; i < bytes.length; i++) crc = (crc >>> 8) ^ _crcTable[(crc ^ bytes[i]) & 0xff]
+  return (crc ^ -1) >>> 0
+}
+
+function makeZip(files) {
+  var enc = new TextEncoder(), chunks = [], central = [], offset = 0
+  function push16(arr, n){ arr.push(n & 255, (n >>> 8) & 255) }
+  function push32(arr, n){ arr.push(n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255) }
+  function dosDateTime(d) {
+    return { time: ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds()/2)) >>> 0, date: (((d.getFullYear()-1980) << 9) | ((d.getMonth()+1) << 5) | d.getDate()) >>> 0 }
+  }
+  files.forEach(function(f) {
+    var name = enc.encode(f.name), data = f.bytes instanceof Uint8Array ? f.bytes : enc.encode(String(f.bytes || ''))
+    var dt = dosDateTime(new Date()), crc = crc32(data), local = []
+    push32(local, 0x04034b50); push16(local, 20); push16(local, 0x0800); push16(local, 0); push16(local, dt.time); push16(local, dt.date)
+    push32(local, crc); push32(local, data.length); push32(local, data.length); push16(local, name.length); push16(local, 0)
+    chunks.push(new Uint8Array(local), name, data)
+    var cent = []
+    push32(cent, 0x02014b50); push16(cent, 20); push16(cent, 20); push16(cent, 0x0800); push16(cent, 0); push16(cent, dt.time); push16(cent, dt.date)
+    push32(cent, crc); push32(cent, data.length); push32(cent, data.length); push16(cent, name.length); push16(cent, 0); push16(cent, 0); push16(cent, 0); push16(cent, 0); push32(cent, 0); push32(cent, offset)
+    central.push(new Uint8Array(cent), name)
+    offset += local.length + name.length + data.length
+  })
+  var centralSize = central.reduce(function(n, c){ return n + c.length }, 0)
+  var end = []
+  push32(end, 0x06054b50); push16(end, 0); push16(end, 0); push16(end, files.length); push16(end, files.length); push32(end, centralSize); push32(end, offset); push16(end, 0)
+  return new Blob(chunks.concat(central, [new Uint8Array(end)]), {type:'application/zip'})
+}
+
+function exportCollectionZip(collId) {
+  var coll = ST.collections.find(function(c){ return c.id === collId })
+  if (!coll) return
+  var cards = ST.cards.filter(function(c){ return (coll.cardIds || []).indexOf(c.id) >= 0 })
+  exportCardsZip(cards, coll.name)
+}
+
+function exportCardsZip(cards, name) {
+  if (!cards.length) { showToast('저장할 카드가 없어요'); return }
+  var enc = new TextEncoder(), files = []
+  files.push({ name:'manifest.json', bytes:enc.encode(JSON.stringify({ name: name, cards: cards.map(function(c){ return Object.assign({}, c, { dataUrls: undefined }) }) }, null, 2)) })
+  files.push({ name:'README.md', bytes:enc.encode('# ' + name + '\n\n' + cards.length + ' cards exported.\n') })
+  cards.forEach(function(c, idx) {
+    var base = 'cards/' + String(idx + 1).padStart(2, '0') + '-' + safeFileName(c.title || c.caption || c.id) + '/'
+    files.push({ name:base + 'card.json', bytes:enc.encode(JSON.stringify(c, null, 2)) })
+    files.push({ name:base + 'content.md', bytes:enc.encode(cardMarkdown(c)) })
+    if (c.code) files.push({ name:base + 'code.' + codeExt(c.language), bytes:enc.encode(c.code) })
+    var imgs = c.dataUrls && c.dataUrls.length ? c.dataUrls : (c.dataUrl ? [c.dataUrl] : [])
+    imgs.forEach(function(src, i) {
+      var parsed = dataUrlToBytes(src)
+      files.push({ name:base + ((c.filenames && c.filenames[i]) || ('image-' + (i+1) + '.' + imageExtFromDataUrl(src))), bytes:parsed.bytes })
+    })
+  })
+  downloadBlob(safeFileName(name) + '.zip', makeZip(files))
+  showToast('ZIP으로 저장했어요')
+}
+
+function getExportCards() {
+  var selected = ST.cards.filter(function(c){ return ST.selectedIds.indexOf(c.id) >= 0 })
+  return selected.length ? selected : getVisible()
+}
+
+var _pendingExportCards = []
+var _pendingExportName = 'stash-export'
+
+function exportIndividualCards(cards) {
+  if (!cards.length) { showToast('내보낼 카드가 없어요'); return }
+  cards.forEach(function(c, idx) {
+    var base = safeFileName(String(idx + 1).padStart(2, '0') + '-' + (c.title || c.caption || c.id))
+    downloadText(base + '.md', cardMarkdown(c), 'text/markdown;charset=utf-8')
+    if (c.code) downloadText(base + '.' + codeExt(c.language), c.code, 'text/plain;charset=utf-8')
+    var imgs = c.dataUrls && c.dataUrls.length ? c.dataUrls : (c.dataUrl ? [c.dataUrl] : [])
+    imgs.forEach(function(src, i) {
+      var a = document.createElement('a')
+      a.href = src
+      a.download = (c.filenames && c.filenames[i]) || (base + '-image-' + (i + 1) + '.' + imageExtFromDataUrl(src))
+      a.click()
+    })
+  })
+  showToast(cards.length + '개 카드 개별 저장을 시작했어요')
+}
+
+function openExportChoice(cards, name) {
+  _pendingExportCards = cards.slice()
+  _pendingExportName = name || 'stash-export'
+  document.getElementById('export-choice-msg').textContent = cards.length + '개 카드를 어떻게 내보낼까요? 개별 저장은 카드별 파일로, ZIP 저장은 하나의 압축 파일로 저장합니다.'
+  document.getElementById('export-choice-overlay').classList.add('open')
+}
+
+function closeExportChoice() {
+  document.getElementById('export-choice-overlay').classList.remove('open')
+}
+
+function handleExport() {
+  var cards = getExportCards()
+  if (!cards.length) { showToast('내보낼 카드가 없어요'); return }
+  var coll = ST.filterCollId ? ST.collections.find(function(c){ return c.id === ST.filterCollId }) : null
+  var name = coll ? coll.name : (ST.selectedIds.length ? 'selected-cards' : 'visible-cards')
+  openExportChoice(cards, name)
+}
+
+function exportMd() {
+  var v = getExportCards()
+  if (!v.length) { showToast('내보낼 카드가 없어요'); return }
+  var lines = ['# Stash 내보내기', '> ' + new Date().toLocaleDateString('ko-KR') + ' · ' + v.length + '개 카드' + (ST.selectedIds.length ? ' · 선택 내보내기' : '') + '\n']
+  v.forEach(function(c) {
+    lines.push('## ' + (c.title || c.caption || 'Card'))
+    getCardLinks(c).forEach(function(l, i){ lines.push('- URL ' + (i + 1) + ' ' + (l.label || linkLabelFromUrl(l.url)) + ': <' + l.url + '>') })
+    if (c.description) lines.push('- 설명: '+c.description)
+    if (c.content) lines.push(c.content)
+    if (c.code) lines.push('```'+(c.language || '')+'\n'+c.code+'\n```')
+    if (c.caption) lines.push('- 캡션: '+c.caption)
+    if (c.tags && c.tags.length) lines.push('- 태그: '+c.tags.map(function(t){return '`'+t+'`'}).join(' '))
+    lines.push('')
+  })
+  var blob = new Blob([lines.join('\n')], {type:'text/markdown;charset=utf-8'})
+  var a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = 'stash-'+new Date().toISOString().slice(0,10)+'.md'
+  a.click(); URL.revokeObjectURL(a.href)
+  showToast('✦ '+v.length+'개 카드 내보냈어요')
+}
+
+// ── 테마 ──────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.body.dataset.theme = theme === 'light' ? 'light' : 'dark'
+  document.getElementById('theme-toggle').textContent = theme === 'light' ? '🌙' : '☀'
+  localStorage.setItem('stash-theme', theme)
+}
+
+// ══════════════════════════════════════════════════════════
+//  이벤트 바인딩
+// ══════════════════════════════════════════════════════════
+
+// 인증
+document.getElementById('btn-auth-open').addEventListener('click', function(){ openAuth('login') })
+document.getElementById('btn-logout').addEventListener('click', doLogout)
+document.getElementById('login-submit').addEventListener('click', doLogin)
+document.getElementById('signup-submit').addEventListener('click', doSignup)
+
+document.getElementById('auth-login-email').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('auth-login-pw').focus() })
+document.getElementById('auth-login-pw').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin() })
+document.getElementById('auth-signup-pw2').addEventListener('keydown', function(e){ if(e.key==='Enter') doSignup() })
+
+document.querySelectorAll('.auth-tab').forEach(function(t) {
+  t.addEventListener('click', function(){ switchAuthTab(t.dataset.tab) })
+})
+
+document.querySelectorAll('.auth-pw-toggle').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var inp = document.getElementById(btn.dataset.for); if (!inp) return
+    var show = inp.type === 'password'
+    inp.type = show ? 'text' : 'password'
+    btn.textContent = show ? '🙈' : '👁'
+  })
+})
+
+document.getElementById('auth-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeAuth()
+})
+
+// 새 카드
+document.getElementById('add-btn').addEventListener('click', openAddModal)
+document.getElementById('add-close').addEventListener('click', closeAddModal)
+document.getElementById('add-cancel').addEventListener('click', closeAddModal)
+document.getElementById('add-save').addEventListener('click', saveAddModal)
+document.getElementById('add-overlay').addEventListener('click', function(e){ if(e.target===this) closeAddModal() })
+
+document.getElementById('add-image-input').addEventListener('change', function() {
+  var files = Array.from(this.files)
+  if (files.length > 10) {
+    showToast('이미지는 최대 10장까지 선택할 수 있어요')
+    this.value = ''
+    document.getElementById('add-file-label').textContent = '이미지 선택'
+    document.getElementById('add-image-preview').innerHTML = ''
+    return
+  }
+  document.getElementById('add-file-label').textContent = files.length ? files.length + '장 선택됨' : '이미지 선택'
+  // 미리보기
+  var preview = document.getElementById('add-image-preview')
+  preview.innerHTML = ''
+  files.forEach(function(file, i) {
+    var reader = new FileReader()
+    reader.onload = function(e) {
+      var wrap = document.createElement('div')
+      wrap.className = 'preview-thumb'
+      wrap.innerHTML = '<img src="'+e.target.result+'" alt="" />' +
+        '<button class="preview-del" data-idx="'+i+'">✕</button>'
+      wrap.querySelector('.preview-del').addEventListener('click', function() {
+        // 파일 input은 직접 제거 불가 → 해당 썸네일만 숨김 처리
+        wrap.style.display = 'none'
+        wrap.dataset.removed = 'true'
+        var remaining = preview.querySelectorAll('.preview-thumb:not([data-removed="true"])').length
+        document.getElementById('add-file-label').textContent = remaining ? remaining + '장 선택됨' : '이미지 선택'
+      })
+      preview.appendChild(wrap)
+    }
+    reader.readAsDataURL(file)
+  })
+})
+
+document.getElementById('add-attach-input').addEventListener('change', function() {
+  var files = Array.from(this.files || [])
+  setAttachLabel('add-attach-label', files.length, 0)
+  renderAttachPreview('add-attach-preview', files, [])
+  if (files.length > 0) {
+    var fileOpt = document.querySelector('#add-cat-options .coll-option[data-cat="__type_file"]')
+    if (fileOpt && !fileOpt.classList.contains('checked')) {
+      var col = fileOpt.dataset.col || '#f59e0b'
+      fileOpt.classList.add('checked')
+      fileOpt.style.cssText = 'background:'+col+'22;color:'+col+';border:1px solid '+col+'66;font-weight:700'
+    }
+  }
+})
+
+document.getElementById('add-tag-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault()
+    var t = this.value.trim().replace(/,$/, '')
+    if (t && ST.addTags.indexOf(t) < 0) {
+      var existing = getUniqueTags()
+      if (existing.indexOf(t) < 0 && existing.length >= 15) { showToast('태그는 최대 15개까지 만들 수 있어요'); this.value=''; return }
+      ST.addTags.push(t); renderAddTags()
+    }
+    this.value = ''
+  }
+  if (e.key === 'Backspace' && !this.value && ST.addTags.length) { ST.addTags.pop(); renderAddTags() }
+})
+document.getElementById('add-tags-wrap').addEventListener('click', function(){ document.getElementById('add-tag-input').focus() })
+
+// 편집 모달
+document.getElementById('edit-close').addEventListener('click', function(){ document.getElementById('edit-overlay').classList.remove('open'); ST.editingId=null })
+document.getElementById('edit-cancel').addEventListener('click', function(){ document.getElementById('edit-overlay').classList.remove('open'); ST.editingId=null })
+document.getElementById('edit-save').addEventListener('click', saveEditModal)
+document.getElementById('edit-overlay').addEventListener('click', function(e){ if(e.target===this){ this.classList.remove('open'); ST.editingId=null } })
+document.getElementById('edit-image-input').addEventListener('change', function() {
+  var card = ST.cards.find(function(c){ return c.id === ST.editingId })
+  renderEditImagePreview(card, this.files)
+})
+document.getElementById('edit-attach-input').addEventListener('change', function() {
+  var card = ST.cards.find(function(c){ return c.id === ST.editingId })
+  var files = Array.from(this.files || [])
+  var saved = card && card.attachments ? card.attachments : []
+  setAttachLabel('edit-attach-label', files.length, saved.length)
+  renderAttachPreview('edit-attach-preview', files, saved)
+  if (files.length > 0) {
+    var fileOpt = document.querySelector('#edit-cat-options .coll-option[data-cat="__type_file"]')
+    if (fileOpt && !fileOpt.classList.contains('checked')) {
+      var col = fileOpt.dataset.col || '#f59e0b'
+      fileOpt.classList.add('checked')
+      fileOpt.style.cssText = 'background:'+col+'22;color:'+col+';border:1px solid '+col+'66;font-weight:700'
+    }
+  }
+})
+
+document.getElementById('edit-tag-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault()
+    var t = this.value.trim().replace(/,$/, '')
+    if (t && ST.editTags.indexOf(t) < 0) {
+      var existing = getUniqueTags()
+      if (existing.indexOf(t) < 0 && existing.length >= 15) { showToast('태그는 최대 15개까지 만들 수 있어요'); this.value=''; return }
+      ST.editTags.push(t); renderEditTags()
+    }
+    this.value = ''
+  }
+  if (e.key === 'Backspace' && !this.value && ST.editTags.length) { ST.editTags.pop(); renderEditTags() }
+})
+document.getElementById('edit-tags-wrap').addEventListener('click', function(){ document.getElementById('edit-tag-input').focus() })
+
+// 상세 모달
+document.getElementById('detail-close').addEventListener('click', function(){ document.getElementById('detail-overlay').classList.remove('open'); ST.detailId=null })
+document.getElementById('detail-overlay').addEventListener('click', function(e){ if(e.target===this){ this.classList.remove('open'); ST.detailId=null } })
+document.getElementById('detail-edit-btn').addEventListener('click', function(){
+  var id = ST.detailId
+  document.getElementById('detail-overlay').classList.remove('open')
+  if (id) openEditModal(id)
+})
+document.getElementById('detail-del-btn').addEventListener('click', function(){
+  var id = ST.detailId
+  document.getElementById('detail-overlay').classList.remove('open')
+  ST.detailId = null
+  if (id) deleteCard(id)
+})
+
+// 컬렉션
+document.getElementById('btn-new-coll').addEventListener('click', openNewCollModal)
+document.getElementById('coll-close').addEventListener('click', function(){ document.getElementById('coll-overlay').classList.remove('open') })
+document.getElementById('coll-cancel').addEventListener('click', function(){ document.getElementById('coll-overlay').classList.remove('open') })
+document.getElementById('coll-confirm').addEventListener('click', createCollection)
+document.getElementById('coll-overlay').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open') })
+document.getElementById('coll-name').addEventListener('keydown', function(e){
+  if(e.key==='Enter') createCollection()
+  if(e.key==='Escape') document.getElementById('coll-overlay').classList.remove('open')
+})
+;(function(){
+  var emojis = ['📁','⭐','🔥','💡','🎯','📚','🎨','🛠','🚀','💎']
+  document.getElementById('coll-emoji').addEventListener('click', function() {
+    ST.collEmoji = emojis[(emojis.indexOf(ST.collEmoji)+1) % emojis.length]
+    this.textContent = ST.collEmoji
+  })
+})()
+
+// 카드 삭제
+document.getElementById('del-card-cancel').addEventListener('click', function(){ document.getElementById('del-card-overlay').classList.remove('open'); ST.deletingCardId=null })
+document.getElementById('del-card-confirm').addEventListener('click', confirmDeleteCard)
+document.getElementById('del-card-overlay').addEventListener('click', function(e){ if(e.target===this){ this.classList.remove('open'); ST.deletingCardId=null } })
+
+// 태그 삭제
+document.getElementById('del-tag-cancel').addEventListener('click', function(){ document.getElementById('del-tag-overlay').classList.remove('open'); _deletingTag=null })
+document.getElementById('del-tag-confirm').addEventListener('click', confirmDelTag)
+document.getElementById('del-tag-overlay').addEventListener('click', function(e){ if(e.target===this){ this.classList.remove('open'); _deletingTag=null } })
+
+// 카테고리 삭제
+document.getElementById('del-cat-cancel').addEventListener('click', function(){ document.getElementById('del-cat-overlay').classList.remove('open'); _deletingCatId=null })
+document.getElementById('del-cat-confirm').addEventListener('click', confirmDelCat)
+document.getElementById('del-cat-overlay').addEventListener('click', function(e){ if(e.target===this){ this.classList.remove('open'); _deletingCatId=null } })
+
+// 컬렉션 삭제
+document.getElementById('del-coll-cancel').addEventListener('click', function(){ document.getElementById('del-coll-overlay').classList.remove('open'); ST.deletingCollId=null })
+document.getElementById('del-coll-confirm').addEventListener('click', confirmDelColl)
+document.getElementById('del-coll-overlay').addEventListener('click', function(e){ if(e.target===this){ this.classList.remove('open'); ST.deletingCollId=null } })
+
+// 카테고리
+document.getElementById('btn-add-cat').addEventListener('click', openCatModal)
+document.getElementById('cat-close').addEventListener('click', function(){ document.getElementById('cat-overlay').classList.remove('open') })
+document.getElementById('cat-cancel').addEventListener('click', function(){ document.getElementById('cat-overlay').classList.remove('open') })
+document.getElementById('cat-confirm').addEventListener('click', createCategory)
+document.getElementById('cat-overlay').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open') })
+document.getElementById('cat-name').addEventListener('keydown', function(e){
+  if(e.key==='Enter') createCategory()
+  if(e.key==='Escape') document.getElementById('cat-overlay').classList.remove('open')
+})
+;(function(){
+  var emojis = ['🏷','🎨','📌','🔖','✅','🌟','🗂','📂','🧩','🔧']
+  document.getElementById('cat-emoji').addEventListener('click', function() {
+    ST.catEmoji = emojis[(emojis.indexOf(ST.catEmoji)+1) % emojis.length]
+    this.textContent = ST.catEmoji
+  })
+})()
+
+// 검색
+var _searchTimer
+document.getElementById('search-input').addEventListener('input', function() {
+  var v = this.value
+  clearTimeout(_searchTimer)
+  _searchTimer = setTimeout(function(){ ST.searchQuery = v; renderSidebar(); renderBoard() }, 300)
+})
+document.getElementById('clear-filter').addEventListener('click', clearFilters)
+document.getElementById('select-mode-btn').addEventListener('click', toggleSelectionMode)
+document.getElementById('select-all-btn').addEventListener('click', toggleSelectVisible)
+document.getElementById('select-clear').addEventListener('click', clearSelection)
+document.getElementById('delete-selected-btn').addEventListener('click', deleteSelectedOrVisible)
+
+// 정렬
+document.getElementById('sort-btn').addEventListener('click', function() {
+  ST.sortOrder = ST.sortOrder === 'newest' ? 'oldest' : 'newest'
+  this.classList.toggle('active', ST.sortOrder === 'oldest')
+  this.title = ST.sortOrder === 'newest' ? '최신순' : '오래된순'
+  renderBoard(); showToast(ST.sortOrder === 'newest' ? '최신순' : '오래된순')
+})
+
+// 내보내기
+document.getElementById('export-btn').addEventListener('click', handleExport)
+document.getElementById('export-choice-close').addEventListener('click', closeExportChoice)
+document.getElementById('export-choice-cancel').addEventListener('click', closeExportChoice)
+document.getElementById('export-choice-overlay').addEventListener('click', function(e){ if(e.target===this) closeExportChoice() })
+document.getElementById('export-choice-zip').addEventListener('click', function() {
+  closeExportChoice()
+  exportCardsZip(_pendingExportCards, _pendingExportName)
+})
+document.getElementById('export-choice-files').addEventListener('click', function() {
+  closeExportChoice()
+  exportIndividualCards(_pendingExportCards)
+})
+
+// 테마
+document.getElementById('theme-toggle').addEventListener('click', function() {
+  applyTheme((localStorage.getItem('stash-theme')||'dark') === 'dark' ? 'light' : 'dark')
+})
+
+// 모바일 메뉴
+document.getElementById('menu-btn').addEventListener('click', function() {
+  document.getElementById('sidebar').classList.toggle('open')
+})
+document.addEventListener('click', function(e) {
+  if (window.innerWidth > 900) return
+  var sb = document.getElementById('sidebar'), mb = document.getElementById('menu-btn')
+  if (!sb.contains(e.target) && !mb.contains(e.target)) sb.classList.remove('open')
+})
+
+// 리사이즈
+var _resizeTimer
+// ── 라이트박스 ───────────────────────────────────────────
+var _lbImgs = [], _lbIdx = 0
+function openLightbox(imgs, idx) {
+  _lbImgs = imgs; _lbIdx = idx
+  document.getElementById('lb-img').src = imgs[idx]
+  document.getElementById('lightbox').classList.add('open')
+  document.body.style.overflow = 'hidden'
+  document.getElementById('lb-prev').style.display = imgs.length > 1 ? '' : 'none'
+  document.getElementById('lb-next').style.display = imgs.length > 1 ? '' : 'none'
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open')
+  document.body.style.overflow = ''
+}
+document.getElementById('lb-close').addEventListener('click', closeLightbox)
+document.getElementById('lightbox').addEventListener('click', function(e){ if(e.target===this) closeLightbox() })
+document.getElementById('lb-prev').addEventListener('click', function() {
+  _lbIdx = (_lbIdx - 1 + _lbImgs.length) % _lbImgs.length
+  document.getElementById('lb-img').src = _lbImgs[_lbIdx]
+})
+document.getElementById('lb-next').addEventListener('click', function() {
+  _lbIdx = (_lbIdx + 1) % _lbImgs.length
+  document.getElementById('lb-img').src = _lbImgs[_lbIdx]
+})
+document.addEventListener('keydown', function(e) {
+  if (!document.getElementById('lightbox').classList.contains('open')) return
+  if (e.key === 'ArrowLeft') document.getElementById('lb-prev').click()
+  if (e.key === 'ArrowRight') document.getElementById('lb-next').click()
+  if (e.key === 'Escape') closeLightbox()
+})
+
+window.addEventListener('resize', function() {
+  clearTimeout(_resizeTimer); _resizeTimer = setTimeout(renderBoard, 250)
+})
+
+// ESC / Ctrl+K
+document.addEventListener('keydown', function(e) {
+  if ((e.metaKey||e.ctrlKey) && e.key === 'k') {
+    e.preventDefault(); document.getElementById('search-input').focus(); return
+  }
+  if (e.key === 'Escape') {
+    if (document.getElementById('auth-overlay').style.display !== 'none') { closeAuth(); return }
+    if (document.getElementById('add-overlay').classList.contains('open')) { closeAddModal(); return }
+    if (document.getElementById('edit-overlay').classList.contains('open')) { document.getElementById('edit-overlay').classList.remove('open'); return }
+    if (document.getElementById('detail-overlay').classList.contains('open')) { document.getElementById('detail-overlay').classList.remove('open'); ST.detailId=null; return }
+    if (document.getElementById('coll-overlay').classList.contains('open')) { document.getElementById('coll-overlay').classList.remove('open'); return }
+    if (document.getElementById('cat-overlay').classList.contains('open')) { document.getElementById('cat-overlay').classList.remove('open'); return }
+    if (document.getElementById('del-card-overlay').classList.contains('open')) { document.getElementById('del-card-overlay').classList.remove('open'); ST.deletingCardId=null; return }
+    if (document.getElementById('del-coll-overlay').classList.contains('open')) { document.getElementById('del-coll-overlay').classList.remove('open'); return }
+    if (document.getElementById('export-choice-overlay').classList.contains('open')) { closeExportChoice(); return }
+    if (ST.filterType!=='all' || ST.filterTag || ST.filterCollId || ST.filterCatId || ST.searchQuery) clearFilters()
+  }
+})
+
+// ══════════════════════════════════════════════════════════
+//  초기화
+// ══════════════════════════════════════════════════════════
+applyTheme(localStorage.getItem('stash-theme') || 'dark')
+load(function() {
+  loadSession()
+  renderLoginUI()
+  renderSidebar()
+  renderBoard()
+})
+</script>
+</body>
+</html>
